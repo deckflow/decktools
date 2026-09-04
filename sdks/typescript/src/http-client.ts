@@ -1,5 +1,6 @@
 import axios, { AxiosHeaders, type AxiosInstance } from 'axios';
-import { resolveAuthUuid } from './auth-uuid.js';
+import { delay, throwIfAborted, withSignal } from './abort.js';
+import type { DeckRuntime } from './runtime.js';
 import { APIError, getRetryDelaysMs, isRetriableAxiosError } from './errors.js';
 import { DEFAULT_ROOT, type CreateDeckOptions, type UserSelf } from './types.js';
 
@@ -10,6 +11,7 @@ type RetriableConfig = Record<string, unknown> & {
   data?: unknown;
   __deckopsCheckoutRetried?: boolean;
   __deckopsAuthRetried?: boolean;
+  signal?: AbortSignal;
 };
 
 type AuthRefreshResult = { token: string; spaceId?: string } | string;
@@ -39,8 +41,10 @@ export class HttpClient {
   private authDowngradedToGuest = false;
   private readonly onUnauthorized?: CreateDeckOptions['onUnauthorized'];
   private readonly onPaymentRequired?: CreateDeckOptions['onPaymentRequired'];
+  private readonly allowGuestFallback: boolean;
+  private readonly retryMutations: boolean;
 
-  constructor(options: CreateDeckOptions = {}) {
+  constructor(options: CreateDeckOptions, private readonly runtime: DeckRuntime) {
     this.root = (options.root ?? DEFAULT_ROOT).replace(/\/$/, '');
     this.token = options.token;
     this.apiKey = options.apiKey;
@@ -48,7 +52,9 @@ export class HttpClient {
     this.spaceIdExplicit = Boolean(options.spaceId);
     this.onUnauthorized = options.onUnauthorized;
     this.onPaymentRequired = options.onPaymentRequired;
-    this.authUuidPromise = resolveAuthUuid(options);
+    this.allowGuestFallback = options.allowGuestFallback ?? true;
+    this.retryMutations = options.retryMutations ?? true;
+    this.authUuidPromise = runtime.resolveAuthUuid(options);
 
     this.client = axios.create({
       baseURL: this.root,
@@ -57,7 +63,8 @@ export class HttpClient {
     });
 
     this.client.interceptors.request.use(async (config) => {
-      const authUuid = await this.authUuidPromise;
+      const authUuid = await withSignal(this.authUuidPromise, config.signal as AbortSignal | undefined);
+      throwIfAborted(config.signal as AbortSignal | undefined);
       const authHeaders = this.buildAuthHeaders();
       const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
       if (isFormData) {
@@ -105,11 +112,12 @@ export class HttpClient {
 
         const status = error.response?.status;
         const cfg = error.config as RetriableConfig | undefined;
+        throwIfAborted(cfg?.signal);
 
         if (status === 402 && cfg && !cfg.__deckopsCheckoutRetried) {
           if (options.onPaymentRequired) {
             cfg.__deckopsCheckoutRetried = true;
-            await options.onPaymentRequired();
+            await withSignal(options.onPaymentRequired(), cfg.signal);
             return await this.client.request(cfg);
           }
           throw APIError.paymentRequired(error);
@@ -120,17 +128,21 @@ export class HttpClient {
           const oldSpaceId = this.spaceIdFromConfig(cfg) ?? this.spaceId;
 
           if (this.onUnauthorized && this.token && !this.isApiKeyAuth()) {
+            let auth: AuthRefreshResult | undefined;
             try {
-              const auth = await this.refreshAuth();
+              auth = await withSignal(this.refreshAuth(), cfg.signal);
+            } catch {
+              throwIfAborted(cfg.signal);
+              if (!this.allowGuestFallback) throw error;
+            }
+            if (auth && (typeof auth === 'string' ? auth : auth.token)) {
               this.applyAuthResult(auth, cfg, oldSpaceId);
               return await this.client.request(cfg);
-            } catch {
-              // Refresh failed — fall through to guest mode.
             }
           }
 
-          if (this.hasCredentials() || this.authDowngradedToGuest || this.guestDowngradePromise) {
-            const guestSpaceId = await this.ensureGuestMode();
+          if (this.allowGuestFallback && (this.hasCredentials() || this.authDowngradedToGuest || this.guestDowngradePromise)) {
+            const guestSpaceId = await withSignal(this.ensureGuestMode(), cfg.signal);
             this.rewriteRequestSpaceId(cfg, oldSpaceId, guestSpaceId);
             cfg.headers = this.guestRequestHeaders(cfg.headers);
             return await this.client.request(cfg);
@@ -142,19 +154,21 @@ export class HttpClient {
     );
   }
 
-  private async withRetry<T>(request: () => Promise<T>): Promise<T> {
+  private async withRetry<T>(request: () => Promise<T>, signal?: AbortSignal, retry = true): Promise<T> {
     const delays = getRetryDelaysMs();
     let lastError: unknown;
 
     for (let attempt = 0; attempt <= delays.length; attempt++) {
+      throwIfAborted(signal);
       if (attempt > 0) {
-        await this.sleep(delays[attempt - 1] ?? delays[delays.length - 1]!);
+        await delay(delays[attempt - 1] ?? delays[delays.length - 1]!, signal);
       }
       try {
         return await request();
       } catch (error) {
+        throwIfAborted(signal);
         lastError = error;
-        if (!axios.isAxiosError(error) || !isRetriableAxiosError(error) || attempt >= delays.length) {
+        if (!retry || axios.isCancel(error) || !axios.isAxiosError(error) || !isRetriableAxiosError(error) || attempt >= delays.length) {
           throw error;
         }
       }
@@ -187,13 +201,17 @@ export class HttpClient {
     this.resolvedSpaceIdPromise = undefined;
   }
 
-  async resolveSpaceId(spaceId?: string): Promise<string | undefined> {
+  async resolveSpaceId(spaceId?: string, signal?: AbortSignal): Promise<string | undefined> {
+    throwIfAborted(signal);
     if (spaceId) {
       return spaceId;
     }
     if (this.spaceId) {
       return this.spaceId;
     }
+
+    // A cancellable lookup owns its request so aborting one caller never cancels another caller.
+    if (signal) return await this.fetchDefaultSpaceId(signal);
 
     // Resolve from GET /user. The endpoint only requires X-Auth-UUID, so
     // it works for both authenticated users and guests. The server enforces
@@ -210,8 +228,8 @@ export class HttpClient {
     }
   }
 
-  private async fetchDefaultSpaceId(): Promise<string> {
-    const res = await this.get<UserSelf>('/user');
+  private async fetchDefaultSpaceId(signal?: AbortSignal): Promise<string> {
+    const res = await this.get<UserSelf>('/user', { signal });
     const id = res.data.id;
     if (!id) {
       throw new Error('user.self did not return an id');
@@ -241,9 +259,11 @@ export class HttpClient {
     try {
       const request = () => this.client.get<T>(this.url(path), config);
       const res =
-        config?.responseType === 'stream' ? await request() : await this.withRetry(request);
+        config?.responseType === 'stream' ? await request() : await this.withRetry(request, config?.signal as AbortSignal | undefined);
       return { data: res.data, headers: res.headers as Record<string, unknown> };
     } catch (error) {
+      throwIfAborted(config?.signal as AbortSignal | undefined);
+      if (axios.isCancel(error)) throw error;
       if (axios.isAxiosError(error)) {
         throw APIError.fromAxiosError(error);
       }
@@ -257,9 +277,11 @@ export class HttpClient {
     config?: Record<string, unknown>
   ): Promise<{ data: T; headers: Record<string, unknown> }> {
     try {
-      const res = await this.withRetry(() => this.client.post<T>(this.url(path), data, config));
+      const res = await this.withRetry(() => this.client.post<T>(this.url(path), data, config), config?.signal as AbortSignal | undefined, this.retryMutations);
       return { data: res.data, headers: res.headers as Record<string, unknown> };
     } catch (error) {
+      throwIfAborted(config?.signal as AbortSignal | undefined);
+      if (axios.isCancel(error)) throw error;
       if (axios.isAxiosError(error)) {
         throw APIError.fromAxiosError(error);
       }
@@ -273,9 +295,11 @@ export class HttpClient {
     config?: Record<string, unknown>
   ): Promise<{ data: T; headers: Record<string, unknown> }> {
     try {
-      const res = await this.withRetry(() => this.client.put<T>(this.url(path), data, config));
+      const res = await this.withRetry(() => this.client.put<T>(this.url(path), data, config), config?.signal as AbortSignal | undefined);
       return { data: res.data, headers: res.headers as Record<string, unknown> };
     } catch (error) {
+      throwIfAborted(config?.signal as AbortSignal | undefined);
+      if (axios.isCancel(error)) throw error;
       if (axios.isAxiosError(error)) {
         throw APIError.fromAxiosError(error);
       }
@@ -285,8 +309,10 @@ export class HttpClient {
 
   async delete(path: string, config?: Record<string, unknown>): Promise<void> {
     try {
-      await this.withRetry(() => this.client.delete(this.url(path), config));
+      await this.withRetry(() => this.client.delete(this.url(path), config), config?.signal as AbortSignal | undefined);
     } catch (error) {
+      throwIfAborted(config?.signal as AbortSignal | undefined);
+      if (axios.isCancel(error)) throw error;
       if (axios.isAxiosError(error)) {
         throw APIError.fromAxiosError(error);
       }
@@ -328,6 +354,7 @@ export class HttpClient {
   }
 
   private shouldUseFetchStream(): boolean {
+    if (this.runtime.useFetchStreams) return true;
     return (
       typeof fetch === 'function' &&
       typeof ReadableStream !== 'undefined' &&
@@ -348,16 +375,17 @@ export class HttpClient {
     const params = { ...(config.params ?? {}) };
 
     for (let networkRetry = 0; ; networkRetry++) {
+      throwIfAborted(config.signal);
       const retryDelays = getRetryDelaysMs();
       if (networkRetry > 0) {
-        await this.sleep(retryDelays[networkRetry - 1] ?? retryDelays[retryDelays.length - 1]!);
+        await delay(retryDelays[networkRetry - 1] ?? retryDelays[retryDelays.length - 1]!, config.signal);
       }
 
       let response: Response;
       try {
         const headers = {
           ...this.buildAuthHeaders(),
-          'X-Auth-UUID': await this.authUuidPromise,
+          'X-Auth-UUID': await withSignal(this.authUuidPromise, config.signal),
           ...(config.headers ?? {}),
         };
         response = await fetch(this.urlWithParams(path, params), {
@@ -366,6 +394,7 @@ export class HttpClient {
           signal: config.signal,
         });
       } catch (error) {
+        throwIfAborted(config.signal);
         if (networkRetry < getRetryDelaysMs().length && this.isRetriableFetchError(error)) {
           continue;
         }
@@ -377,7 +406,7 @@ export class HttpClient {
       if (response.status === 402 && !checkoutRetried) {
         if (this.onPaymentRequired) {
           checkoutRetried = true;
-          await this.onPaymentRequired();
+          await withSignal(this.onPaymentRequired(), config.signal);
           networkRetry = 0;
           continue;
         }
@@ -390,7 +419,8 @@ export class HttpClient {
 
         if (this.onUnauthorized && this.token && !this.isApiKeyAuth()) {
           try {
-            const auth = await this.refreshAuth();
+            const auth = await withSignal(this.refreshAuth(), config.signal);
+            if (!(typeof auth === 'string' ? auth : auth.token)) throw new Error('Token refresh returned no token');
             const nextSpaceId = this.applyAuthResult(auth, undefined, oldSpaceId);
             if (oldSpaceId && nextSpaceId && params.spaceId === oldSpaceId) {
               params.spaceId = nextSpaceId;
@@ -398,12 +428,13 @@ export class HttpClient {
             networkRetry = 0;
             continue;
           } catch {
-            // Refresh failed — fall through to guest mode.
+            throwIfAborted(config.signal);
+            if (!this.allowGuestFallback) throw await this.readFetchAPIError(response, responseHeaders);
           }
         }
 
-        if (this.hasCredentials() || this.authDowngradedToGuest || this.guestDowngradePromise) {
-          const guestSpaceId = await this.ensureGuestMode();
+        if (this.allowGuestFallback && (this.hasCredentials() || this.authDowngradedToGuest || this.guestDowngradePromise)) {
+          const guestSpaceId = await withSignal(this.ensureGuestMode(), config.signal);
           if (oldSpaceId && params.spaceId === oldSpaceId) {
             params.spaceId = guestSpaceId;
           }
@@ -486,6 +517,11 @@ export class HttpClient {
       return cfg.params.spaceId;
     }
 
+    if (typeof FormData !== 'undefined' && cfg.data instanceof FormData) {
+      const spaceId = cfg.data.get('spaceId');
+      return typeof spaceId === 'string' ? spaceId : undefined;
+    }
+
     if (typeof cfg.data === 'string') {
       try {
         const parsed = JSON.parse(cfg.data) as Record<string, unknown>;
@@ -550,25 +586,6 @@ export class HttpClient {
     return apiError;
   }
 
-  private async sleep(ms: number, signal?: AbortSignal): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        signal?.removeEventListener('abort', onAbort);
-        resolve();
-      }, ms);
-      const onAbort = (): void => {
-        clearTimeout(timer);
-        reject(signal?.reason ?? new DOMException('Aborted', 'AbortError'));
-      };
-      if (signal?.aborted) {
-        clearTimeout(timer);
-        reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
-        return;
-      }
-      signal?.addEventListener('abort', onAbort, { once: true });
-    });
-  }
-
   private urlWithParams(path: string, params?: Record<string, string>): string {
     const url = new URL(this.url(path));
     for (const [key, value] of Object.entries(params ?? {})) {
@@ -590,9 +607,17 @@ export class HttpClient {
       return Promise.reject(new Error('onUnauthorized is not configured'));
     }
     if (!this.authRefreshPromise) {
-      this.authRefreshPromise = this.onUnauthorized().finally(() => {
-        this.authRefreshPromise = undefined;
-      });
+      this.authRefreshPromise = this.onUnauthorized()
+        .then((auth) => {
+          const token = typeof auth === 'string' ? auth : auth?.token;
+          if (typeof token !== 'string' || !token.trim()) {
+            throw new Error('onUnauthorized must return a non-empty token');
+          }
+          return auth;
+        })
+        .finally(() => {
+          this.authRefreshPromise = undefined;
+        });
     }
     return this.authRefreshPromise;
   }
@@ -653,6 +678,11 @@ export class HttpClient {
     }
 
     if (!cfg.data) {
+      return;
+    }
+
+    if (typeof FormData !== 'undefined' && cfg.data instanceof FormData) {
+      if (cfg.data.get('spaceId') === oldSpaceId) cfg.data.set('spaceId', newSpaceId);
       return;
     }
 

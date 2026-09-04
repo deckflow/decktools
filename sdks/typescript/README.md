@@ -18,6 +18,9 @@ pnpm --filter @deckops/sdk build
 
 ## Create a Client
 
+Use the root entry point in Node.js. Browser applications should use the dedicated
+`@deckops/sdk/browser` entry point documented below.
+
 ```ts
 import { createDeck } from '@deckops/sdk';
 
@@ -39,6 +42,8 @@ Options:
 - `authUuidStorage?: { get(), set(value) }` - custom storage for client UUID (SSR, tests, embedded apps).
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - called once after a 401, then the request is retried.
 - `onPaymentRequired?: () => Promise<void>` - called once after a 402, then the request is retried.
+- `allowGuestFallback?: boolean` - allow expired credentials to be cleared and retried as guest; defaults to `true` in Node and `false` in `/browser`.
+- `retryMutations?: boolean` - retry POSTs after transient network/server failures; defaults to `true` in Node and `false` in `/browser`.
 
 `token`, `apiKey`, and `spaceId` are all optional. When `spaceId` is omitted the SDK resolves it from `GET /user`, an endpoint that only requires `X-Auth-UUID`. This means `token` and `apiKey` can both be empty: the SDK runs in **guest mode**, the server identifies the guest by `X-Auth-UUID` and enforces usage limits and rate quotas. This is useful for try-before-login experiences.
 
@@ -57,6 +62,45 @@ Every Deckops API request automatically includes `X-Auth-UUID`, a stable UUID v4
 const uuid = await deck.getAuthUuid();
 console.log('Client UUID:', uuid);
 ```
+
+## Browser entry point
+
+The browser entry point shares the task/upload/parse implementation but excludes
+Node file and UUID storage code. It is safe to import during SSR. Local paths are
+rejected; use `File`, named `Blob`, or named binary data instead.
+
+```ts
+import { createDeck } from '@deckops/sdk/browser';
+
+const deck = createDeck({ root: 'https://api.example.com/v1', token: userAccessToken });
+const controller = new AbortController();
+const parsed = await deck.parse({ file, name: file.name }, {
+  signal: controller.signal,
+  onTask: (task) => console.log('Created:', task.id),
+  upload: { onProgress: (fraction) => console.log('Uploaded:', fraction) },
+  wait: { onProgress: (task) => console.log(task.status) },
+});
+const view = await deck.convert({ irKey: parsed.irKey }, { signal: controller.signal });
+console.log(view.markdown);
+```
+
+Both facades accept `signal` and `onTask`. Upload APIs, task creation, task reads,
+downloads, waits and subscriptions also accept `signal`. Aborting stops HTTP,
+uploads, SSE and polling/retry delays; it **does not cancel or delete a cloud task**
+that has already been created. Keep the `onTask` id to resume inspection later.
+An interrupted submission may already exist remotely, so do not blindly submit it again.
+
+Browser authentication fails closed: a 401 may refresh credentials once with
+`onUnauthorized`, but a missing/empty/failed refresh or another 401 raises an error
+without switching to guest. Starting without credentials remains an explicit
+guest-mode option. Browser POSTs are not automatically retried after ambiguous
+transport failures. Do not put long-lived server API keys in browser code; use a
+user-scoped token or a backend proxy. API, SSE and storage endpoints must allow
+your origin through CORS, including exposing `ETag` for multipart uploads.
+
+Upload progress is coarse-grained: single/inline uploads report `1` after the
+request succeeds; multipart uploads report completed parts up to `0.95` and `1`
+after completion. No artificial byte-level progress is emitted.
 
 ## Create Tasks With Files
 
@@ -264,6 +308,84 @@ await deck.revamp({
   params: { lang: 'zh' },
 });
 ```
+
+## Parse Documents
+
+Parsing and view generation are two separate primitives:
+
+- `deck.parse()` turns a document into an **IR** — a structured representation
+  you can hold on to. It never returns Markdown.
+- `deck.convert()` turns a stored IR into a **view**, by reference. It never
+  re-parses the source.
+
+That split is the point: parse once, convert as many times as you like. The IR
+stays available for **7 days**, and converting costs no upload and no re-parse.
+
+```ts
+const parsed = await deck.parse('./slides.pptx');
+parsed.ir;      // structured result, passed through verbatim
+parsed.irKey;   // the reference — this is what convert() consumes
+
+const { markdown } = await deck.convert({ irKey: parsed.irKey });
+```
+
+`convert()` also accepts the parse task id, which is handy when you stored the
+task rather than the key:
+
+```ts
+await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
+```
+
+`ir` is the response body passed through verbatim, so type it with the task
+type's result:
+
+```ts
+import type { PdfParseResult, PptxParseResult } from '@deckops/sdk';
+
+const report = await deck.parse<PdfParseResult>('./report.pdf');
+report.ir.document.elements;
+```
+
+Parse params ride on the parse options and are only sent to the task types that
+accept them — `password`, `parseProfile`, `includeImages` for `.pdf`,
+`stayImageAreaRate` for `.key`:
+
+```ts
+await deck.parse('./report.pdf', { parseProfile: 'quality', password: 'pw' });
+```
+
+View params belong to `convert()`, not to parsing — `markdownPages` for
+`.pptx` / `.key`, `markdownMeta` (per-element provenance comments) for `.pdf`:
+
+```ts
+await deck.convert({ irKey }, { markdownPages: true });
+await deck.convert({ irKey }, { markdownMeta: true });
+```
+
+Already-uploaded files take `{ fileId, name }`; links take `{ url, mode }`:
+
+```ts
+await deck.parse({ fileId: 'uploaded-file-id', name: 'slides.pptx' });
+await deck.parse({ url: 'https://example.com/article', mode: 'runtime' });
+```
+
+Supported extensions are `.pdf`, `.pptx`, `.docx`, and `.key`. The low-level
+helpers (`deck.pdfParse` → `pdf.pdfParse`, `deck.pptxParse`, `deck.docxParse`,
+`deck.keynoteParse`, `deck.htmlGetByURL`, `deck.convertIr` → `parse.convert`)
+take the backend params directly.
+
+Images in a converted view are signed URLs that expire. `convert()` returns an
+`images[]` manifest — the same shape for every format — mapping each URL to its
+persistent key and a suggested on-disk path, so a client that wants to keep the
+Markdown can download them and rewrite the links.
+
+Conversion degrades rather than fails by default: when rendering breaks,
+`markdownError` explains why and `markdown` is empty. Pass
+`markdownStrict: true` to make the task fail instead.
+
+This needs a backend running `@deckflow/platform-slave` 0.22.0 or newer. Against
+older servers `parse()` throws instead of returning a result with no `irKey`,
+which would be a result nothing could convert.
 
 ## Browser and Node.js Notes
 

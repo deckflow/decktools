@@ -1,9 +1,16 @@
-import type { PptxParseResult } from './parse/pptx.js';
 import type {
+  ConvertTaskParams,
+  ConvertTaskResult,
   DocxParseResult,
+  DocxParseTaskParams,
   HtmlGetByUrlResult,
+  HtmlGetByUrlTaskParams,
   KeynoteParseResult,
+  KeynoteParseTaskParams,
   PdfParseResult,
+  PdfParseTaskParams,
+  PptxParseResult,
+  PptxParseTaskParams,
 } from './parse/types.js';
 
 export const DEFAULT_ROOT = 'https://app.deckflow.com/v1';
@@ -37,11 +44,12 @@ export const DECK_TASK_TYPES = [
   'video.compress',
   'image.convertWebp',
   'image.resize',
-  'pdf.parse',
+  'pdf.pdfParse',
   'pptx.parse',
   'docx.parseTextAndImage',
   'keynote.parseTextAndImage',
   'html.getByURL',
+  'parse.convert',
   'generation',
   'translation',
   'revamp',
@@ -141,9 +149,13 @@ export interface CreateDeckOptions {
   authUuidStorage?: AuthUuidStorage;
   /**
    * Called once after a 401 when a user token is present. Returned token is saved and the request is
-   * retried. If omitted or refresh fails, credentials are cleared and the request is retried as guest.
+   * retried. If omitted or refresh fails, the request fails unless allowGuestFallback is true.
    */
   onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>;
+  /** Permit a failed login to fall back to guest. Defaults to true in Node, false in /browser. */
+  allowGuestFallback?: boolean;
+  /** Retry POSTs on transient network/server failures. Defaults to true in Node, false in /browser. */
+  retryMutations?: boolean;
   /** Called once after a 402 response; request is retried after this resolves. */
   onPaymentRequired?: () => Promise<void>;
 }
@@ -154,6 +166,8 @@ export interface UserSelf {
 }
 
 export interface CreateTaskParams<T extends DeckTaskType = DeckTaskType> {
+  /** Stops client-side upload/submission; does not cancel an already-created cloud task. */
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }) or user.self id. */
   spaceId?: string;
   /** Ordered input file ids. Required for most tasks except generation/html.buildPlayer. */
@@ -177,6 +191,7 @@ export interface CreateTaskParams<T extends DeckTaskType = DeckTaskType> {
 export interface TaskShortcutParams<T extends DeckTaskType> extends Omit<CreateTaskParams<T>, 'type'> {}
 
 export interface ListTasksParams<T extends DeckTaskType = DeckTaskType> {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }) or user.self id. */
   spaceId?: string;
   /** Optional task type filter. */
@@ -188,6 +203,10 @@ export interface ListTasksParams<T extends DeckTaskType = DeckTaskType> {
 }
 
 export interface WaitForTaskOptions {
+  /** Space containing this task. Defaults to the client's space. */
+  spaceId?: string;
+  /** Stops waiting; does not cancel the cloud task. */
+  signal?: AbortSignal;
   /** Timeout in seconds. Defaults to 300. */
   timeout?: number;
   /** Use Server-Sent Events first, then fall back to polling. Defaults to true. */
@@ -201,6 +220,8 @@ export interface WaitForTaskOptions {
 export type TaskDownloadType = 'html' | 'pptx' | 'image';
 
 export interface TaskDownloadOptions {
+  spaceId?: string;
+  signal?: AbortSignal;
   /** Download target type. Only used by generation and revamp tasks. Defaults to backend value html. */
   type?: TaskDownloadType;
 }
@@ -218,6 +239,8 @@ export type TaskDownResult<T extends DeckTaskType = DeckTaskType> = T extends
   : DeckTaskTypeResult[T];
 
 export interface SubscribeTaskHandlers<T extends DeckTaskType = DeckTaskType> {
+  spaceId?: string;
+  signal?: AbortSignal;
   /** Called for each task update. */
   onUpdate: (task: DeckTask<T>) => void;
   /** Called when the stream or parser fails. */
@@ -275,6 +298,7 @@ export interface PartResult {
 }
 
 export interface RequestUploadParams {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }). */
   spaceId?: string;
   /** File name. */
@@ -290,6 +314,7 @@ export interface RequestUploadParams {
 export type UploadInput = string | Uint8Array | ArrayBuffer | Blob;
 
 export interface UploadOptions {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }). */
   spaceId?: string;
   /** File name. Required for binary inputs that do not carry a name. */
@@ -833,29 +858,21 @@ export interface HtmlToPptxResult {
   usedFonts: string[];
 }
 
-export interface PdfParseTaskParams {
-  /** 是否提取文本，默认 true */
-  includeText?: boolean;
-  /** 是否提取图片，默认 true */
-  includeImages?: boolean;
-  /** 最小图片面积占比过滤，0-1 */
-  minImageAreaRatio?: number;
-  /** 是否返回 rawTextItems（调试用） */
-  debug?: boolean;
-}
+/**
+ * 解析类任务的参数与结果定义在 `./parse/types.ts`，此处只做转出，
+ * 免得同一份服务端契约在两个文件里各写一遍、各自漂移。
+ */
+export type {
+  ConvertTaskParams,
+  ConvertTaskResult,
+  DocxParseTaskParams,
+  HtmlGetByUrlTaskParams,
+  KeynoteParseTaskParams,
+  PdfParseTaskParams,
+  PptxParseTaskParams,
+};
 
-export type PptxParseTaskParams = Record<never, never>;
-export type DocxParseTaskParams = Record<never, never>;
-export type KeynoteParseTaskParams = Record<never, never>;
-
-export interface HtmlGetByUrlTaskParams {
-  /** 目标 http(s) 链接 */
-  url: string;
-  /** 取源码还是取运行后的代码，默认 runtime */
-  mode?: 'source' | 'runtime';
-}
-
-/** `pptx.parse` 的结果：PPTX 对象模型，字段结构见 @deckflow/presentation */
+/** `pptx.parse` 的结果：PPTX 对象模型 */
 export type PptxTaskParseResult = PptxParseResult;
 
 export interface DeckTaskTypeParams {
@@ -882,11 +899,12 @@ export interface DeckTaskTypeParams {
   'video.compress': VideoCompressParams;
   'image.convertWebp': ImageConvertWebpParams;
   'image.resize': ImageResizeParams;
-  'pdf.parse': PdfParseTaskParams;
+  'pdf.pdfParse': PdfParseTaskParams;
   'pptx.parse': PptxParseTaskParams;
   'docx.parseTextAndImage': DocxParseTaskParams;
   'keynote.parseTextAndImage': KeynoteParseTaskParams;
   'html.getByURL': HtmlGetByUrlTaskParams;
+  'parse.convert': ConvertTaskParams;
   generation: GenerationParams;
   translation: TranslationParams;
   revamp: RevampParams;
@@ -916,11 +934,12 @@ export interface DeckTaskTypeResult {
   'video.compress': FileResult;
   'image.convertWebp': FileResult;
   'image.resize': FileResult;
-  'pdf.parse': PdfParseResult;
-  'pptx.parse': PptxTaskParseResult;
+  'pdf.pdfParse': PdfParseResult;
+  'pptx.parse': PptxParseResult;
   'docx.parseTextAndImage': DocxParseResult;
   'keynote.parseTextAndImage': KeynoteParseResult;
   'html.getByURL': HtmlGetByUrlResult;
+  'parse.convert': ConvertTaskResult;
   generation: Required<{ image?: FileResult; pptx?: FileResult; html?: FileResult }>;
   translation: FileResult;
   revamp: Required<{ image?: FileResult; pptx?: FileResult; html?: FileResult }>;
@@ -953,7 +972,8 @@ export interface DeckTaskTypePreview {
   'convertor.markdown2png': never;
   'html.buildPlayer': never;
   'image.convertWebp': never;
-  'pdf.parse': never;
+  'pdf.pdfParse': never;
+  'parse.convert': never;
   'pptx.parse': never;
   'docx.parseTextAndImage': never;
   'keynote.parseTextAndImage': never;

@@ -1,15 +1,19 @@
 {
   "name": "@deckops/sdk",
-  "version": "0.7.4",
+  "version": "0.8.0-next.0",
   "description": "Deckops TypeScript SDK for Node.js and browsers",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js"
     }
   },
   "files": [
@@ -25,18 +29,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@deckflow/presentation": "^0.3.5",
-    "@mozilla/readability": "^0.6.0",
     "axios": "^1.6.0",
     "eventsource-parser": "^1.1.0",
-    "linkedom": "^0.18.0",
-    "p-limit": "^5.0.0",
-    "turndown": "^7.2.0",
-    "turndown-plugin-gfm": "^1.0.2"
+    "p-limit": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/turndown": "^5.0.5",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "axios-mock-adapter": "^1.22.0",

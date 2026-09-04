@@ -1,23 +1,17 @@
 /**
- * 解析结果 → markdown 的转换层。
+ * 解析类任务的类型与扩展名路由。
  *
- * 服务端把 slave 的解析原语原样暴露为 ttask 类型（`pdf.parse` / `pptx.parse` /
- * `docx.parseTextAndImage` / `keynote.parseTextAndImage` / `html.getByURL`），
- * 返回**结构化结果**；需要 markdown 的调用方在这里做最后一步转换。
+ * 服务端把 slave 的解析原语原样暴露为 ttask 类型（`pdf.pdfParse` / `pptx.parse` /
+ * `docx.parseTextAndImage` / `keynote.parseTextAndImage` / `html.getByURL`）。
  *
- * 想要结构化数据（形状坐标、表格结构、页宽高）的调用方直接用底层结果即可，不必经过这里。
+ * **它们只产出 IR**：View 由 `parse.convert` 从已存储的 IR 派生，见 `../convert-facade.ts`。
  */
 
 export * from './types.js';
-export { pdfResult2Markdown } from './pdf.js';
-export { keynoteResult2Markdown, PAGE_SEPARATOR } from './keynote.js';
-export { docxResult2Markdown } from './docx.js';
-export { pptxResult2Markdown, type PptxParseResult, type PptxConvertOptions } from './pptx.js';
-export { html2markdown, type Html2MarkdownOptions } from './html.js';
 
 /** 走解析链路的文档任务类型 */
 export type ParseTaskType =
-  | 'pdf.parse'
+  | 'pdf.pdfParse'
   | 'pptx.parse'
   | 'docx.parseTextAndImage'
   | 'keynote.parseTextAndImage';
@@ -25,10 +19,10 @@ export type ParseTaskType =
 /**
  * 扩展名 → 任务类型。
  *
- * 这是本方案**唯一**外移到客户端的服务端知识，TS 与 Go SDK 必须保持一致。
+ * 这是本方案**唯一**外移到客户端的服务端知识，TS / Python / Go SDK 必须保持一致。
  */
 export const PARSE_TASK_TYPE_BY_EXTENSION: Record<string, ParseTaskType> = {
-  '.pdf': 'pdf.parse',
+  '.pdf': 'pdf.pdfParse',
   '.pptx': 'pptx.parse',
   '.docx': 'docx.parseTextAndImage',
   '.key': 'keynote.parseTextAndImage',
@@ -36,6 +30,12 @@ export const PARSE_TASK_TYPE_BY_EXTENSION: Record<string, ParseTaskType> = {
 
 /** 支持解析的文件扩展名 */
 export const PARSE_SUPPORTED_EXTENSIONS = Object.keys(PARSE_TASK_TYPE_BY_EXTENSION);
+
+/** 支持逐页 markdown（convert 的 `markdownPages`）的任务类型 —— 只有分页格式有 */
+export const PARSE_PAGED_TASK_TYPES: ReadonlySet<ParseTaskType> = new Set<ParseTaskType>([
+  'pptx.parse',
+  'keynote.parseTextAndImage',
+]);
 
 /** 从文件名/路径/URL 取小写扩展名（含点），取不到返回空串 */
 export const extensionOf = (nameOrPath: string): string => {

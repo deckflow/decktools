@@ -255,6 +255,75 @@ await deck.revamp({
 });
 ```
 
+## 解析文档
+
+解析与出 View 是两个独立原语：
+
+- `deck.parse()` 把文档变成 **IR** —— 一份可以长期持有的结构化表示。它不返回 markdown。
+- `deck.convert()` 按引用把已存储的 IR 转成 **View**。它不重新解析源文件。
+
+拆开的意义就在这里：**解析一次，反复转换**。IR 保留 **7 天**，这期间转换既不用重新上传，
+也不用重新解析。
+
+```ts
+const parsed = await deck.parse('./slides.pptx');
+parsed.ir;      // 结构化结果，原样透传
+parsed.irKey;   // 引用 —— convert() 吃的就是它
+
+const { markdown } = await deck.convert({ irKey: parsed.irKey });
+```
+
+只记了任务、没记 key 时，`convert()` 也认 parse 任务的 id：
+
+```ts
+await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
+```
+
+`ir` 是返回体原样透传，用对应任务类型的结果类型标注它：
+
+```ts
+import type { PdfParseResult, PptxParseResult } from '@deckops/sdk';
+
+const report = await deck.parse<PdfParseResult>('./report.pdf');
+report.ir.document.elements;
+```
+
+解析参数挂在 parse 的 options 上，且只下发给认得它的任务类型 —— `.pdf` 的 `password`、
+`parseProfile`、`includeImages`，`.key` 的 `stayImageAreaRate`：
+
+```ts
+await deck.parse('./report.pdf', { parseProfile: 'quality', password: 'pw' });
+```
+
+View 参数属于 `convert()` 而不是解析 —— `.pptx` / `.key` 的 `markdownPages`，`.pdf` 的
+`markdownMeta`（逐元素溯源注释）：
+
+```ts
+await deck.convert({ irKey }, { markdownPages: true });
+await deck.convert({ irKey }, { markdownMeta: true });
+```
+
+已上传的文件用 `{ fileId, name }`，链接用 `{ url, mode }`：
+
+```ts
+await deck.parse({ fileId: 'uploaded-file-id', name: 'slides.pptx' });
+await deck.parse({ url: 'https://example.com/article', mode: 'runtime' });
+```
+
+支持的扩展名是 `.pdf`、`.pptx`、`.docx`、`.key`。底层辅助方法（`deck.pdfParse` →
+`pdf.pdfParse`、`deck.pptxParse`、`deck.docxParse`、`deck.keynoteParse`、
+`deck.htmlGetByURL`、`deck.convertIr` → `parse.convert`）直接收后端参数。
+
+View 里的图片地址带签名、会过期。`convert()` 会返回 `images[]` 清单 —— 四种格式同一形状 ——
+把每个地址映射到持久 key 与建议落盘路径，想把 markdown 存下来的调用方据此下载图片并改写
+链接即可。
+
+渲染默认容错而不是失败：出问题时 `markdownError` 说明原因、`markdown` 为空。要让任务直接
+失败就传 `markdownStrict: true`。
+
+这套接口需要后端跑 `@deckflow/platform-slave` 0.22.0 或更新版本。对更老的服务端，
+`parse()` 会直接报错，而不是交回一个没有 `irKey`、谁也转不了的结果。
+
 ## 浏览器与 Node.js 说明
 
 - 任务辅助方法直接接受文件，在创建任务前上传。
