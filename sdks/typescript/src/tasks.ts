@@ -1,4 +1,5 @@
 import { createParser, type ParsedEvent, type ReconnectInterval } from 'eventsource-parser';
+import { delay, throwIfAborted } from './abort.js';
 import type { HttpClient, NodeReadableLike } from './http-client.js';
 import {
   DEFAULT_POLL_INTERVAL,
@@ -33,6 +34,9 @@ type EventStreamBody = NodeReadableLike | ReadableStream<Uint8Array> | string;
 const SSE_RETRY_INTERVAL = 5000;
 const SSE_MAX_RETRIES = 100;
 
+/** The endpoint returned a snapshot, not a stream; polling can continue the wait. */
+class EventStreamUnavailableError extends Error {}
+
 export class TasksApi {
   private readonly webStreamReaders = new WeakMap<ReadableStream<Uint8Array>, ReadableStreamDefaultReader<Uint8Array>>();
 
@@ -42,7 +46,8 @@ export class TasksApi {
   ) {}
 
   async create<T extends DeckTaskType>(params: CreateTaskParams<T>): Promise<DeckTask<T>> {
-    const spaceId = await this.resolveSpaceId(params.spaceId);
+    throwIfAborted(params.signal);
+    const spaceId = await this.http.resolveSpaceId(params.spaceId, params.signal);
     const prepared = await this.prepareTaskFiles(params);
     const totalBytes = prepared.reduce((sum, file) => sum + file.bytes, 0);
     const canInlineFiles =
@@ -68,7 +73,7 @@ export class TasksApi {
       payload.name = params.name;
     }
 
-    const res = await this.http.post<DeckTask<T>>('/tools/tasks', payload);
+    const res = await this.http.post<DeckTask<T>>('/tools/tasks', payload, { signal: params.signal });
     return res.data;
   }
 
@@ -97,10 +102,10 @@ export class TasksApi {
           ? file.data
           : new Blob([this.toArrayBuffer(file.data as Uint8Array)]);
       form.append('files', blob, file.name);
-      params.upload?.onProgress?.(1);
     }
 
-    const res = await this.http.post<DeckTask<T>>('/tools/tasks', form);
+    const res = await this.http.post<DeckTask<T>>('/tools/tasks', form, { signal: params.signal });
+    params.upload?.onProgress?.(1);
     return res.data;
   }
 
@@ -117,11 +122,11 @@ export class TasksApi {
    * and waits for an explicit `PUT /tools/tasks/:id/start` before running.
    * Authenticated tasks are started automatically by the backend.
    */
-  async start<T extends DeckTaskType = DeckTaskType>(taskId: string): Promise<DeckTask<T>> {
+  async start<T extends DeckTaskType = DeckTaskType>(taskId: string, options: { signal?: AbortSignal; spaceId?: string } = {}): Promise<DeckTask<T>> {
     const res = await this.http.put<DeckTask<T>>(
       `/tools/tasks/${encodeURIComponent(taskId)}/start`,
       undefined,
-      { params: this.taskQueryParams() }
+      { params: this.taskQueryParams(options.spaceId), signal: options.signal }
     );
     return res.data;
   }
@@ -139,7 +144,7 @@ export class TasksApi {
     return await Promise.all(
       params.files.map(async (file) => {
         const { input, options } = this.normalizeTaskUpload(file, params.upload);
-        return await this.files!.prepare(input, options);
+        return await this.files!.prepare(input, { ...options, signal: params.signal ?? options.signal });
       })
     );
   }
@@ -164,6 +169,7 @@ export class TasksApi {
         const result = await this.files!.uploadPrepared(file, {
           ...options,
           spaceId,
+          signal: params.signal ?? options.signal,
         });
         return result.id;
       })
@@ -198,7 +204,7 @@ export class TasksApi {
   }
 
   async list<T extends DeckTaskType = DeckTaskType>(params: ListTasksParams<T> = {}): Promise<TaskListResponse<T>> {
-    const spaceId = await this.resolveSpaceId(params.spaceId);
+    const spaceId = await this.http.resolveSpaceId(params.spaceId, params.signal);
     const query: Record<string, string | number> = {
       _startIndex: params.startIndex ?? 0,
       _maxResults: params.maxResults ?? 50,
@@ -211,7 +217,7 @@ export class TasksApi {
       query.type = params.type;
     }
 
-    const res = await this.http.get<DeckTask<T>[]>('/tools/tasks', { params: query });
+    const res = await this.http.get<DeckTask<T>[]>('/tools/tasks', { params: query, signal: params.signal });
     const total = res.headers['x-content-record-total'];
     return {
       tasks: res.data,
@@ -221,7 +227,7 @@ export class TasksApi {
 
   async get<T extends DeckTaskType = DeckTaskType>(
     taskId: string,
-    options: { useEventStream?: boolean } = {}
+    options: { useEventStream?: boolean; signal?: AbortSignal; spaceId?: string } = {}
   ): Promise<DeckTask<T>> {
     const headers: Record<string, string> = {};
     if (options.useEventStream) {
@@ -230,7 +236,8 @@ export class TasksApi {
 
     const res = await this.http.get<DeckTask<T> | string>(`/tools/tasks/${encodeURIComponent(taskId)}`, {
       headers,
-      params: this.taskQueryParams(),
+      signal: options.signal,
+      params: this.taskQueryParams(options.spaceId),
     });
 
     const contentType = String(res.headers['content-type'] ?? '').toLowerCase();
@@ -250,9 +257,10 @@ export class TasksApi {
     return res.data as DeckTask<T>;
   }
 
-  async delete(taskId: string): Promise<void> {
+  async delete(taskId: string, options: { signal?: AbortSignal; spaceId?: string } = {}): Promise<void> {
     await this.http.delete(`/tools/tasks/${encodeURIComponent(taskId)}`, {
-      params: this.taskQueryParams(),
+      params: this.taskQueryParams(options.spaceId),
+      signal: options.signal,
     });
   }
 
@@ -260,14 +268,15 @@ export class TasksApi {
     taskId: string,
     options: TaskDownloadOptions = {}
   ): Promise<TaskDownResult<T>> {
-    const params: Record<string, string> = {};
+    // Keep the legacy no-space download query unless a caller/facade selects a space explicitly.
+    const params: Record<string, string> = options.spaceId ? { spaceId: options.spaceId } : {};
     if (options.type) {
       params._type = options.type;
     }
 
     const res = await this.http.get<TaskDownResult<T>>(
       `/tools/tasks/${encodeURIComponent(taskId)}/download`,
-      Object.keys(params).length ? { params } : undefined
+      { ...(Object.keys(params).length ? { params } : {}), signal: options.signal }
     );
     return res.data;
   }
@@ -277,12 +286,28 @@ export class TasksApi {
     options: WaitForTaskOptions = {}
   ): Promise<DeckTask<T>> {
     const timeout = options.timeout ?? DEFAULT_TIMEOUT;
+    throwIfAborted(options.signal);
+    const controller = new AbortController();
+    const onAbort = () => controller.abort(options.signal?.reason);
+    options.signal?.addEventListener('abort', onAbort, { once: true });
+    const timer = setTimeout(() => controller.abort(new Error(`Task ${taskId} did not complete within ${timeout}s`)), timeout * 1000);
+    try {
+      return await this.waitInternal<T>(taskId, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+      options.signal?.removeEventListener('abort', onAbort);
+      controller.abort();
+    }
+  }
+
+  private async waitInternal<T extends DeckTaskType>(taskId: string, options: WaitForTaskOptions): Promise<DeckTask<T>> {
+    const timeout = options.timeout ?? DEFAULT_TIMEOUT;
     const startedAt = Date.now();
 
     // Fast path: task may already be terminal before SSE connects (common for
     // quick guest-mode tasks after an explicit start). Avoid hanging on an SSE
     // connection that never emits a terminal event for an already-finished task.
-    const current = await this.get<T>(taskId);
+    const current = await this.get<T>(taskId, { signal: options.signal, spaceId: options.spaceId });
     options.onProgress?.(current);
     if (current.status === 'completed') {
       return current;
@@ -293,13 +318,18 @@ export class TasksApi {
 
     const remainingTimeout = Math.max(timeout - (Date.now() - startedAt) / 1000, 0);
     if (options.useEventStream !== false) {
-      return await this.waitWithEventStream<T>(taskId, remainingTimeout, options.onProgress);
+      return await this.waitWithEventStream<T>(
+        taskId, remainingTimeout, options.onProgress, options.signal,
+        options.pollInterval ?? DEFAULT_POLL_INTERVAL, options.spaceId
+      );
     }
     return await this.waitWithPolling<T>(
       taskId,
       remainingTimeout,
       options.pollInterval ?? DEFAULT_POLL_INTERVAL,
-      options.onProgress
+      options.onProgress,
+      options.signal,
+      options.spaceId
     );
   }
 
@@ -307,6 +337,7 @@ export class TasksApi {
     taskId: string,
     handlers: SubscribeTaskHandlers<T>
   ): Promise<() => void> {
+    throwIfAborted(handlers.signal);
     const abortController = new AbortController();
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let resolveRetryTimer: (() => void) | undefined;
@@ -316,6 +347,7 @@ export class TasksApi {
 
     const cancel = (): void => {
       closed = true;
+      handlers.signal?.removeEventListener('abort', cancel);
       abortController.abort();
       if (retryTimer) {
         clearTimeout(retryTimer);
@@ -326,6 +358,7 @@ export class TasksApi {
       this.destroyStream(activeStream);
       activeStream = undefined;
     };
+    handlers.signal?.addEventListener('abort', cancel, { once: true });
 
     const waitBeforeRetry = async (): Promise<void> => {
       await new Promise<void>((resolve) => {
@@ -360,7 +393,7 @@ export class TasksApi {
       }
     };
 
-    void run();
+    void run().finally(() => handlers.signal?.removeEventListener('abort', cancel));
 
     return Promise.resolve(cancel);
   }
@@ -371,10 +404,11 @@ export class TasksApi {
     signal: AbortSignal,
     onStream: (stream: EventStreamBody | undefined) => void
   ): Promise<void> {
+    throwIfAborted(signal);
     const res = await this.http.eventStream<DeckTask<T>>(`/tools/tasks/${encodeURIComponent(taskId)}`, {
       headers: { 'response-event-stream': 'yes' },
       signal,
-      params: this.taskQueryParams(),
+      params: this.taskQueryParams(handlers.spaceId),
     });
 
     const contentType = String(res.headers['content-type'] ?? '').toLowerCase();
@@ -384,6 +418,10 @@ export class TasksApi {
       // otherwise wait() never sees status=completed and hangs forever.
       const task = await this.parseJsonTaskBody<T>(res.data, signal);
       handlers.onUpdate(task);
+      throwIfAborted(signal);
+      if (task.status !== 'completed' && task.status !== 'failed') {
+        throw new EventStreamUnavailableError('Task endpoint returned a non-terminal JSON snapshot instead of SSE');
+      }
       return;
     }
 
@@ -559,6 +597,7 @@ export class TasksApi {
   }
 
   private isSseTransportError(error: unknown): boolean {
+    if (error instanceof EventStreamUnavailableError) return false;
     if (typeof error !== 'object' || error === null) {
       return false;
     }
@@ -580,17 +619,17 @@ export class TasksApi {
       return false;
     }
 
-    const err = error as { code?: string; message?: string };
-    return err.code === 'ERR_CANCELED' || err.message === 'canceled' || err.message?.includes('canceled') === true;
+    const err = error as { code?: string; name?: string; message?: string };
+    return err.name === 'AbortError' || err.code === 'ERR_CANCELED' || err.message === 'canceled' || err.message?.includes('canceled') === true;
   }
 
   private destroyStream(stream: EventStreamBody | undefined): void {
     if (this.isWebReadableStream(stream)) {
       const reader = this.webStreamReaders.get(stream);
       if (reader) {
-        void reader.cancel();
+        void reader.cancel().catch(() => {});
       } else {
-        void stream.cancel();
+        void stream.cancel().catch(() => {});
       }
       return;
     }
@@ -637,13 +676,15 @@ export class TasksApi {
     this.webStreamReaders.set(stream, reader);
     const decoder = new TextDecoder();
     const abort = (): void => {
-      void reader.cancel();
+      void reader.cancel().catch(() => {});
     };
     signal.addEventListener('abort', abort, { once: true });
 
     try {
+      throwIfAborted(signal);
       for (;;) {
         const { done, value } = await reader.read();
+        throwIfAborted(signal);
         if (done) {
           break;
         }
@@ -663,9 +704,13 @@ export class TasksApi {
   private async waitWithEventStream<T extends DeckTaskType>(
     taskId: string,
     timeout: number,
-    onProgress?: (task: DeckTask) => void
+    onProgress?: (task: DeckTask) => void,
+    signal?: AbortSignal,
+    pollInterval = DEFAULT_POLL_INTERVAL,
+    spaceId?: string
   ): Promise<DeckTask<T>> {
     return await new Promise<DeckTask<T>>((resolve, reject) => {
+      throwIfAborted(signal);
       const start = Date.now();
       let cancel: (() => void) | undefined;
       let settled = false;
@@ -677,6 +722,7 @@ export class TasksApi {
       };
 
       const finish = (callback: () => void): void => {
+        signal?.removeEventListener('abort', onAbort);
         clearInterval(timer);
         cancel?.();
         if (!settled) {
@@ -684,6 +730,8 @@ export class TasksApi {
           callback();
         }
       };
+      const onAbort = (): void => finish(() => reject(signal?.reason ?? new DOMException('Aborted', 'AbortError')));
+      signal?.addEventListener('abort', onAbort, { once: true });
 
       const fallbackToPolling = (): void => {
         if (settled || fallbackStarted) {
@@ -693,18 +741,12 @@ export class TasksApi {
         fallbackStarted = true;
         clearInterval(timer);
         cancel?.();
-        this.waitWithPolling<T>(taskId, remainingTimeout(), DEFAULT_POLL_INTERVAL, onProgress)
+        this.waitWithPolling<T>(taskId, remainingTimeout(), pollInterval, onProgress, signal, spaceId)
           .then((task) => {
-            if (!settled) {
-              settled = true;
-              resolve(task);
-            }
+            finish(() => resolve(task));
           })
           .catch((error) => {
-            if (!settled) {
-              settled = true;
-              reject(error);
-            }
+            finish(() => reject(error));
           });
       };
 
@@ -715,6 +757,8 @@ export class TasksApi {
       }, 1000);
 
       void this.subscribe<T>(taskId, {
+        signal,
+        spaceId,
         onUpdate: (task) => {
           onProgress?.(task);
           if (task.status === 'completed') {
@@ -723,7 +767,11 @@ export class TasksApi {
             finish(() => reject(new Error(`Task failed: ${task.error || 'Unknown error'}`)));
           }
         },
-        onError: () => {
+        onError: (error) => {
+          if (signal?.aborted || (error as { statusCode?: number }).statusCode === 401) {
+            finish(() => reject(signal?.aborted ? signal.reason : error));
+            return;
+          }
           fallbackToPolling();
         },
       }).then((cancelFn) => {
@@ -731,7 +779,7 @@ export class TasksApi {
         if (settled || fallbackStarted) {
           cancelFn();
         }
-      });
+      }).catch((error) => finish(() => reject(error)));
     });
   }
 
@@ -739,15 +787,18 @@ export class TasksApi {
     taskId: string,
     timeout: number,
     pollInterval: number,
-    onProgress?: (task: DeckTask) => void
+    onProgress?: (task: DeckTask) => void,
+    signal?: AbortSignal,
+    spaceId?: string
   ): Promise<DeckTask<T>> {
     const start = Date.now();
     for (;;) {
+      throwIfAborted(signal);
       if (Date.now() - start > timeout * 1000) {
         throw new Error(`Task ${taskId} did not complete within ${timeout}s`);
       }
 
-      const task = await this.get<T>(taskId);
+      const task = await this.get<T>(taskId, { signal, spaceId });
       onProgress?.(task);
 
       if (task.status === 'completed') {
@@ -757,15 +808,12 @@ export class TasksApi {
         throw new Error(`Task failed: ${task.error || 'Unknown error'}`);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      await delay(pollInterval, signal);
     }
   }
 
-  private async resolveSpaceId(spaceId?: string): Promise<string | undefined> {
-    return this.http.resolveSpaceId(spaceId);
-  }
-
-  private taskQueryParams(): Record<string, string> | undefined {
-    return this.http.spaceId ? { spaceId: this.http.spaceId } : undefined;
+  private taskQueryParams(spaceId?: string): Record<string, string> | undefined {
+    const effectiveSpaceId = spaceId ?? this.http.spaceId;
+    return effectiveSpaceId ? { spaceId: effectiveSpaceId } : undefined;
   }
 }

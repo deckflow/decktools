@@ -149,9 +149,13 @@ export interface CreateDeckOptions {
   authUuidStorage?: AuthUuidStorage;
   /**
    * Called once after a 401 when a user token is present. Returned token is saved and the request is
-   * retried. If omitted or refresh fails, credentials are cleared and the request is retried as guest.
+   * retried. If omitted or refresh fails, the request fails unless allowGuestFallback is true.
    */
   onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>;
+  /** Permit a failed login to fall back to guest. Defaults to true in Node, false in /browser. */
+  allowGuestFallback?: boolean;
+  /** Retry POSTs on transient network/server failures. Defaults to true in Node, false in /browser. */
+  retryMutations?: boolean;
   /** Called once after a 402 response; request is retried after this resolves. */
   onPaymentRequired?: () => Promise<void>;
 }
@@ -162,6 +166,8 @@ export interface UserSelf {
 }
 
 export interface CreateTaskParams<T extends DeckTaskType = DeckTaskType> {
+  /** Stops client-side upload/submission; does not cancel an already-created cloud task. */
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }) or user.self id. */
   spaceId?: string;
   /** Ordered input file ids. Required for most tasks except generation/html.buildPlayer. */
@@ -185,6 +191,7 @@ export interface CreateTaskParams<T extends DeckTaskType = DeckTaskType> {
 export interface TaskShortcutParams<T extends DeckTaskType> extends Omit<CreateTaskParams<T>, 'type'> {}
 
 export interface ListTasksParams<T extends DeckTaskType = DeckTaskType> {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }) or user.self id. */
   spaceId?: string;
   /** Optional task type filter. */
@@ -196,6 +203,10 @@ export interface ListTasksParams<T extends DeckTaskType = DeckTaskType> {
 }
 
 export interface WaitForTaskOptions {
+  /** Space containing this task. Defaults to the client's space. */
+  spaceId?: string;
+  /** Stops waiting; does not cancel the cloud task. */
+  signal?: AbortSignal;
   /** Timeout in seconds. Defaults to 300. */
   timeout?: number;
   /** Use Server-Sent Events first, then fall back to polling. Defaults to true. */
@@ -209,6 +220,8 @@ export interface WaitForTaskOptions {
 export type TaskDownloadType = 'html' | 'pptx' | 'image';
 
 export interface TaskDownloadOptions {
+  spaceId?: string;
+  signal?: AbortSignal;
   /** Download target type. Only used by generation and revamp tasks. Defaults to backend value html. */
   type?: TaskDownloadType;
 }
@@ -226,6 +239,8 @@ export type TaskDownResult<T extends DeckTaskType = DeckTaskType> = T extends
   : DeckTaskTypeResult[T];
 
 export interface SubscribeTaskHandlers<T extends DeckTaskType = DeckTaskType> {
+  spaceId?: string;
+  signal?: AbortSignal;
   /** Called for each task update. */
   onUpdate: (task: DeckTask<T>) => void;
   /** Called when the stream or parser fails. */
@@ -283,6 +298,7 @@ export interface PartResult {
 }
 
 export interface RequestUploadParams {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }). */
   spaceId?: string;
   /** File name. */
@@ -298,6 +314,7 @@ export interface RequestUploadParams {
 export type UploadInput = string | Uint8Array | ArrayBuffer | Blob;
 
 export interface UploadOptions {
+  signal?: AbortSignal;
   /** Space/workspace id. Falls back to createDeck({ spaceId }). */
   spaceId?: string;
   /** File name. Required for binary inputs that do not carry a name. */

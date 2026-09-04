@@ -1,6 +1,8 @@
 import axios from 'axios';
 import pLimit from 'p-limit';
+import { throwIfAborted, withSignal } from './abort.js';
 import type { HttpClient } from './http-client.js';
+import type { DeckRuntime } from './runtime.js';
 import {
   DEFAULT_CHUNK_SIZE,
   type AuthInfo,
@@ -15,10 +17,11 @@ import {
 } from './types.js';
 
 export class FilesApi {
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient, private readonly runtime: DeckRuntime) {}
 
   async requestUpload(params: RequestUploadParams): Promise<UploadAuthResponse> {
-    const spaceId = await this.resolveSpaceId(params.spaceId);
+    throwIfAborted(params.signal);
+    const spaceId = await this.http.resolveSpaceId(params.spaceId, params.signal);
     if (!spaceId) {
       throw new Error('spaceId is required for file uploads');
     }
@@ -27,13 +30,16 @@ export class FilesApi {
       bytes: params.bytes,
       hash: params.hash,
       chunkSize: params.chunkSize ?? DEFAULT_CHUNK_SIZE,
-    });
+    }, { signal: params.signal });
     return res.data;
   }
 
   /** Normalize a local input into bytes/name/hash without uploading. */
   async prepare(input: UploadInput, options: UploadOptions = {}): Promise<PreparedUpload> {
-    return await this.normalizeInput(input, options);
+    throwIfAborted(options.signal);
+    const result = await this.normalizeInput(input, options);
+    throwIfAborted(options.signal);
+    return result;
   }
 
   async upload(input: UploadInput, options: UploadOptions = {}): Promise<FileUploadResult> {
@@ -42,13 +48,25 @@ export class FilesApi {
   }
 
   async uploadPrepared(file: PreparedUpload, options: UploadOptions = {}): Promise<FileUploadResult> {
+    throwIfAborted(options.signal);
+    try {
+      return await this.performUpload(file, options);
+    } catch (error) {
+      throwIfAborted(options.signal);
+      throw error;
+    }
+  }
+
+  private async performUpload(file: PreparedUpload, options: UploadOptions): Promise<FileUploadResult> {
     const auth = await this.requestUpload({
+      signal: options.signal,
       spaceId: options.spaceId,
       name: file.name,
       bytes: file.bytes,
       hash: file.hash,
       chunkSize: file.chunkSize,
     });
+    throwIfAborted(options.signal);
 
     if (!auth.auth) {
       options.onProgress?.(1);
@@ -62,11 +80,12 @@ export class FilesApi {
     }
 
     if (auth.multipart) {
-      await this.uploadMultipart(file, auth, options.onProgress);
+      await this.uploadMultipart(file, auth, options.onProgress, options.signal);
     } else {
-      await this.uploadSingle(file, auth, options.onProgress);
+      await this.uploadSingle(file, auth, options.onProgress, options.signal);
     }
 
+    throwIfAborted(options.signal);
     return {
       id: auth.id,
       key: auth.key,
@@ -76,23 +95,17 @@ export class FilesApi {
     };
   }
 
-  private async resolveSpaceId(spaceId?: string): Promise<string | undefined> {
-    return this.http.resolveSpaceId(spaceId);
-  }
-
   private async normalizeInput(input: UploadInput, options: UploadOptions): Promise<PreparedUpload> {
     const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
 
     if (typeof input === 'string') {
-      if (!this.isNodeRuntime()) {
+      if (!this.runtime.readFile) {
         throw new Error('String file paths are only supported in Node.js. Use File, Blob, Uint8Array, or ArrayBuffer in browsers.');
       }
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
-      const data = await fs.readFile(input);
+      const { data, name } = await this.runtime.readFile(input, options.signal);
       const hash = options.hash ?? this.calculateMD5(data);
       return {
-        name: options.name ?? path.basename(input),
+        name: options.name ?? name,
         bytes: data.byteLength,
         hash,
         data,
@@ -105,7 +118,7 @@ export class FilesApi {
       if (!name) {
         throw new Error('name is required when uploading a Blob without a name');
       }
-      const bytes = new Uint8Array(await input.arrayBuffer());
+      const bytes = new Uint8Array(await withSignal(input.arrayBuffer(), options.signal));
       return {
         name,
         bytes: input.size,
@@ -132,10 +145,6 @@ export class FilesApi {
 
   private isBlob(input: UploadInput | Blob | Uint8Array): input is Blob {
     return typeof Blob !== 'undefined' && input instanceof Blob;
-  }
-
-  private isNodeRuntime(): boolean {
-    return typeof process !== 'undefined' && process.versions?.node != null;
   }
 
   private calculateMD5(data: Uint8Array): string {
@@ -218,7 +227,8 @@ export class FilesApi {
   private async uploadSingle(
     file: PreparedUpload,
     authResponse: UploadAuthResponse,
-    onProgress?: (percentage: number) => void
+    onProgress?: (percentage: number) => void,
+    signal?: AbortSignal
   ): Promise<void> {
     const { auth, platform } = authResponse;
     if (!auth) {
@@ -227,10 +237,11 @@ export class FilesApi {
 
     const headers = this.authHeaders(auth);
     if (platform === 'oss') {
-      await axios.put(auth.url, file.data, { headers });
+      await axios.put(auth.url, file.data, { headers, signal });
     } else {
       const { body, headers: formHeaders } = await this.createFormBody(file.name, file.data);
       await axios.put(auth.url, body, {
+        signal,
         headers: {
           ...headers,
           ...formHeaders,
@@ -238,13 +249,15 @@ export class FilesApi {
       });
     }
 
+    throwIfAborted(signal);
     onProgress?.(1);
   }
 
   private async uploadMultipart(
     file: PreparedUpload,
     authResponse: UploadAuthResponse,
-    onProgress?: (percentage: number) => void
+    onProgress?: (percentage: number) => void,
+    signal?: AbortSignal
   ): Promise<void> {
     const { auth, multipartPartAuths, multipartPartSize, platform } = authResponse;
     if (!auth) {
@@ -261,12 +274,14 @@ export class FilesApi {
       onProgress?.((0.95 * progress.reduce((a, b) => a + b, 0)) / partCount);
     };
 
-    const data = this.isBlob(file.data) ? new Uint8Array(await file.data.arrayBuffer()) : file.data;
+    const data = this.isBlob(file.data)
+      ? new Uint8Array(await withSignal(file.data.arrayBuffer(), signal)) : file.data;
     const limit = pLimit(5);
     const parts = await Promise.all(
       multipartPartAuths.map((partAuth, index) =>
         limit(async () => {
-          const result = await this.uploadPart(file.name, data, partAuth, index, chunkSize, platform);
+          throwIfAborted(signal);
+          const result = await this.uploadPart(file.name, data, partAuth, index, chunkSize, platform, signal);
           progress[index] = 1;
           updateProgress();
           return result;
@@ -275,7 +290,8 @@ export class FilesApi {
     );
 
     parts.sort((a, b) => a.partNumber - b.partNumber);
-    await this.completeMultipart(auth, platform, parts);
+    throwIfAborted(signal);
+    await this.completeMultipart(auth, platform, parts, signal);
     onProgress?.(1);
   }
 
@@ -285,13 +301,14 @@ export class FilesApi {
     partAuth: PartAuth,
     partIndex: number,
     chunkSize: number,
-    platform: string
+    platform: string,
+    signal?: AbortSignal
   ): Promise<PartResult> {
     const chunk = data.slice(partIndex * chunkSize, (partIndex + 1) * chunkSize);
     const headers = this.authHeaders(partAuth);
 
     if (platform === 'oss') {
-      const response = await axios.put(partAuth.url, chunk, { headers });
+      const response = await axios.put(partAuth.url, chunk, { headers, signal });
       let etag = String(response.headers.etag || '');
       if (etag.startsWith('"') && etag.endsWith('"')) {
         etag = etag.slice(1, -1);
@@ -301,6 +318,7 @@ export class FilesApi {
 
     const { body, headers: formHeaders } = await this.createFormBody(name, chunk);
     const response = await axios.put<unknown>(partAuth.url, body, {
+      signal,
       headers: {
         ...headers,
         ...formHeaders,
@@ -310,19 +328,19 @@ export class FilesApi {
     return { partNumber: partIndex + 1, hash: String(responseData.hash ?? '') };
   }
 
-  private async completeMultipart(auth: AuthInfo, platform: string, parts: PartResult[]): Promise<void> {
+  private async completeMultipart(auth: AuthInfo, platform: string, parts: PartResult[], signal?: AbortSignal): Promise<void> {
     const headers = this.authHeaders(auth);
     if (platform === 'oss') {
       const xmlParts = parts.map(
         (part) => `<Part><PartNumber>${part.partNumber}</PartNumber><ETag>${part.eTag}</ETag></Part>`
       );
       await axios.post(auth.url, `<CompleteMultipartUpload>${xmlParts.join('')}</CompleteMultipartUpload>`, {
-        headers,
+        headers, signal,
       });
       return;
     }
 
-    await axios.post(auth.url, { parts }, { headers: { ...headers, 'Content-Type': 'application/json' } });
+    await axios.post(auth.url, { parts }, { headers: { ...headers, 'Content-Type': 'application/json' }, signal });
   }
 
   private authHeaders(auth: AuthInfo | PartAuth): Record<string, string> {

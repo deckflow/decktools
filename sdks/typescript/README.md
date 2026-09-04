@@ -18,6 +18,9 @@ pnpm --filter @deckops/sdk build
 
 ## Create a Client
 
+Use the root entry point in Node.js. Browser applications should use the dedicated
+`@deckops/sdk/browser` entry point documented below.
+
 ```ts
 import { createDeck } from '@deckops/sdk';
 
@@ -39,6 +42,8 @@ Options:
 - `authUuidStorage?: { get(), set(value) }` - custom storage for client UUID (SSR, tests, embedded apps).
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - called once after a 401, then the request is retried.
 - `onPaymentRequired?: () => Promise<void>` - called once after a 402, then the request is retried.
+- `allowGuestFallback?: boolean` - allow expired credentials to be cleared and retried as guest; defaults to `true` in Node and `false` in `/browser`.
+- `retryMutations?: boolean` - retry POSTs after transient network/server failures; defaults to `true` in Node and `false` in `/browser`.
 
 `token`, `apiKey`, and `spaceId` are all optional. When `spaceId` is omitted the SDK resolves it from `GET /user`, an endpoint that only requires `X-Auth-UUID`. This means `token` and `apiKey` can both be empty: the SDK runs in **guest mode**, the server identifies the guest by `X-Auth-UUID` and enforces usage limits and rate quotas. This is useful for try-before-login experiences.
 
@@ -57,6 +62,45 @@ Every Deckops API request automatically includes `X-Auth-UUID`, a stable UUID v4
 const uuid = await deck.getAuthUuid();
 console.log('Client UUID:', uuid);
 ```
+
+## Browser entry point
+
+The browser entry point shares the task/upload/parse implementation but excludes
+Node file and UUID storage code. It is safe to import during SSR. Local paths are
+rejected; use `File`, named `Blob`, or named binary data instead.
+
+```ts
+import { createDeck } from '@deckops/sdk/browser';
+
+const deck = createDeck({ root: 'https://api.example.com/v1', token: userAccessToken });
+const controller = new AbortController();
+const parsed = await deck.parse({ file, name: file.name }, {
+  signal: controller.signal,
+  onTask: (task) => console.log('Created:', task.id),
+  upload: { onProgress: (fraction) => console.log('Uploaded:', fraction) },
+  wait: { onProgress: (task) => console.log(task.status) },
+});
+const view = await deck.convert({ irKey: parsed.irKey }, { signal: controller.signal });
+console.log(view.markdown);
+```
+
+Both facades accept `signal` and `onTask`. Upload APIs, task creation, task reads,
+downloads, waits and subscriptions also accept `signal`. Aborting stops HTTP,
+uploads, SSE and polling/retry delays; it **does not cancel or delete a cloud task**
+that has already been created. Keep the `onTask` id to resume inspection later.
+An interrupted submission may already exist remotely, so do not blindly submit it again.
+
+Browser authentication fails closed: a 401 may refresh credentials once with
+`onUnauthorized`, but a missing/empty/failed refresh or another 401 raises an error
+without switching to guest. Starting without credentials remains an explicit
+guest-mode option. Browser POSTs are not automatically retried after ambiguous
+transport failures. Do not put long-lived server API keys in browser code; use a
+user-scoped token or a backend proxy. API, SSE and storage endpoints must allow
+your origin through CORS, including exposing `ETag` for multipart uploads.
+
+Upload progress is coarse-grained: single/inline uploads report `1` after the
+request succeeds; multipart uploads report completed parts up to `0.95` and `1`
+after completion. No artificial byte-level progress is emitted.
 
 ## Create Tasks With Files
 

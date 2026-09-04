@@ -17,7 +17,8 @@
 
 import { parseTaskTypeFor, PARSE_SUPPORTED_EXTENSIONS, type ParseTaskType } from './parse/index.js';
 import type { ConvertTarget, ConvertTaskResult, IrResult } from './parse/types.js';
-import type { DeckTask, TaskUploadInput, WaitForTaskOptions } from './types.js';
+import type { DeckTask, TaskDownloadOptions, TaskUploadInput, TaskUploadOptions, WaitForTaskOptions } from './types.js';
+import { throwIfAborted } from './abort.js';
 
 /** 要解析的文件 */
 export interface ParseFileSource {
@@ -47,6 +48,12 @@ export interface ParseLinkSource {
 export type ParseSource = string | ParseFileSource | ParseFileIdSource | ParseLinkSource;
 
 export interface ParseOptions {
+  /** Stops client-side work; an already-submitted cloud task is not cancelled. */
+  signal?: AbortSignal;
+  /** Invoked immediately after task creation, before waiting. */
+  onTask?: (task: DeckTask) => void;
+  /** Upload progress and file options. */
+  upload?: TaskUploadOptions;
   /** 空间 id */
   spaceId?: string;
   /** 等待任务完成的选项 */
@@ -76,6 +83,9 @@ export interface ParseResult<R = unknown> extends IrResult {
 export type ConvertRef = { irKey: string; taskId?: never } | { taskId: string; irKey?: never };
 
 export interface ConvertOptions {
+  signal?: AbortSignal;
+  /** Invoked immediately after task creation, before waiting. */
+  onTask?: (task: DeckTask) => void;
   /** 目标 View，默认 markdown */
   to?: ConvertTarget;
   /** 空间 id */
@@ -102,9 +112,11 @@ interface ParseDeps {
     files?: TaskUploadInput[];
     fileIds?: string[];
     params?: Record<string, unknown>;
+    signal?: AbortSignal;
+    upload?: TaskUploadOptions;
   }): Promise<DeckTask>;
   waitTask(taskId: string, options?: WaitForTaskOptions): Promise<DeckTask>;
-  downTask(taskId: string): Promise<unknown>;
+  downTask(taskId: string, options?: TaskDownloadOptions): Promise<unknown>;
 }
 
 const isLinkSource = (source: ParseSource): source is ParseLinkSource =>
@@ -197,8 +209,11 @@ export const createParse = (deps: ParseDeps) => {
     source: ParseSource,
     options: ParseOptions = {}
   ): Promise<ParseResult<R>> => {
+    const signal = options.signal ?? options.wait?.signal;
+    throwIfAborted(signal);
     if (isLinkSource(source)) {
       const task = await deps.createTask({
+        signal,
         type: 'html.getByURL',
         spaceId: options.spaceId,
         params: {
@@ -207,8 +222,11 @@ export const createParse = (deps: ParseDeps) => {
           ...parseParams('html.getByURL', options),
         },
       });
-      const done = await deps.waitTask(task.id, options.wait);
-      const raw = await deps.downTask(done.id);
+      options.onTask?.(task);
+      throwIfAborted(signal);
+      const spaceId = task.spaceId ?? options.spaceId;
+      const done = await deps.waitTask(task.id, { ...options.wait, signal, spaceId });
+      const raw = await deps.downTask(done.id, { signal, spaceId });
       return toParseResult<R>(raw, done.id, 'html.getByURL');
     }
 
@@ -220,6 +238,12 @@ export const createParse = (deps: ParseDeps) => {
     if (!type) throw unsupported(name);
 
     const task = await deps.createTask({
+      signal,
+      upload: {
+        ...options.upload,
+        ...(isFileIdSource(normalized) || !normalized.name ? {} : { name: normalized.name }),
+        signal,
+      },
       type,
       spaceId: options.spaceId,
       params: parseParams(type, options),
@@ -227,8 +251,11 @@ export const createParse = (deps: ParseDeps) => {
         ? { fileIds: [normalized.fileId] }
         : { files: [normalized.file] }),
     });
-    const done = await deps.waitTask(task.id, options.wait);
-    const raw = await deps.downTask(done.id);
+    options.onTask?.(task);
+    throwIfAborted(signal);
+    const spaceId = task.spaceId ?? options.spaceId;
+    const done = await deps.waitTask(task.id, { ...options.wait, signal, spaceId });
+    const raw = await deps.downTask(done.id, { signal, spaceId });
 
     return toParseResult<R>(raw, done.id, type);
   };
@@ -243,7 +270,10 @@ export const createParse = (deps: ParseDeps) => {
    * ```
    */
   const convert = async (ref: ConvertRef, options: ConvertOptions = {}): Promise<ConvertResult> => {
+    const signal = options.signal ?? options.wait?.signal;
+    throwIfAborted(signal);
     const task = await deps.createTask({
+      signal,
       type: 'parse.convert',
       spaceId: options.spaceId,
       params: {
@@ -254,8 +284,11 @@ export const createParse = (deps: ParseDeps) => {
         ...(options.markdownStrict === undefined ? {} : { markdownStrict: options.markdownStrict }),
       },
     });
-    const done = await deps.waitTask(task.id, options.wait);
-    const raw = (await deps.downTask(done.id)) as ConvertTaskResult;
+    options.onTask?.(task);
+    throwIfAborted(signal);
+    const spaceId = task.spaceId ?? options.spaceId;
+    const done = await deps.waitTask(task.id, { ...options.wait, signal, spaceId });
+    const raw = (await deps.downTask(done.id, { signal, spaceId })) as ConvertTaskResult;
     return { ...raw, taskId: done.id };
   };
 
