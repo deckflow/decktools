@@ -199,7 +199,7 @@ async function repairArgv(
   argv: string[],
   err: CommanderError
 ): Promise<string[] | null> {
-  const debug = process.env.DECKOPS_INTERACTIVE_DEBUG === '1';
+  const debug = process.env.DECKTOOLS_INTERACTIVE_DEBUG === '1';
   if (err.code === 'commander.missingMandatoryOptionValue') {
     const m = err.message.match(/required option '([^']+)'/);
     if (!m?.[1]) {
@@ -209,7 +209,7 @@ async function repairArgv(
     const option = findOptionForSpec(leaf, m[1]);
     if (debug) {
       // eslint-disable-next-line no-console
-      console.error(`[deckops] repair mandatory option=${m[1]} leaf=${leaf.name()} found=${Boolean(option)}`);
+      console.error(`[decktools] repair mandatory option=${m[1]} leaf=${leaf.name()} found=${Boolean(option)}`);
     }
     if (!option) {
       return null;
@@ -227,7 +227,7 @@ async function repairArgv(
     const option = findOptionForSpec(leaf, m[1]);
     if (debug) {
       // eslint-disable-next-line no-console
-      console.error(`[deckops] repair optionMissingArg option=${m[1]} leaf=${leaf.name()} found=${Boolean(option)}`);
+      console.error(`[decktools] repair optionMissingArg option=${m[1]} leaf=${leaf.name()} found=${Boolean(option)}`);
     }
     if (!option) {
       return null;
@@ -247,7 +247,7 @@ async function repairArgv(
     const arg = leaf.registeredArguments.find((a) => a.name() === argName);
     if (debug) {
       // eslint-disable-next-line no-console
-      console.error(`[deckops] repair missingArgument arg=${argName} leaf=${leaf.name()} found=${Boolean(arg)}`);
+      console.error(`[decktools] repair missingArgument arg=${argName} leaf=${leaf.name()} found=${Boolean(arg)}`);
     }
     if (!arg) {
       return null;
@@ -283,10 +283,10 @@ export async function parseWithInteractiveRepair(program: Command, argv: string[
   };
   applyExitOverride(program);
   const interactive = isInteractiveCapable(argv);
-  if (process.env.DECKOPS_INTERACTIVE_DEBUG === '1') {
+  if (process.env.DECKTOOLS_INTERACTIVE_DEBUG === '1') {
     // eslint-disable-next-line no-console
     console.error(
-      `[deckops] interactive=${interactive} stdinTTY=${Boolean(process.stdin.isTTY)} stdoutTTY=${Boolean(process.stdout.isTTY)} hasDevTty=${fs.existsSync(
+      `[decktools] interactive=${interactive} stdinTTY=${Boolean(process.stdin.isTTY)} stdoutTTY=${Boolean(process.stdout.isTTY)} hasDevTty=${fs.existsSync(
         DEV_TTY
       )}`
     );
@@ -308,9 +308,9 @@ export async function parseWithInteractiveRepair(program: Command, argv: string[
         await program.parseAsync(current);
         return;
       } catch (e) {
-        if (process.env.DECKOPS_INTERACTIVE_DEBUG === '1') {
+        if (process.env.DECKTOOLS_INTERACTIVE_DEBUG === '1') {
           // eslint-disable-next-line no-console
-          console.error(`[deckops] parse attempt=${attempt} caught=${(e as any)?.code ?? 'unknown'}`);
+          console.error(`[decktools] parse attempt=${attempt} caught=${(e as any)?.code ?? 'unknown'}`);
         }
         if (!(e instanceof CommanderError)) {
           throw e;
@@ -320,9 +320,9 @@ export async function parseWithInteractiveRepair(program: Command, argv: string[
         }
         const next = await repairArgv(program, current, e);
         if (!next) {
-          if (process.env.DECKOPS_INTERACTIVE_DEBUG === '1') {
+          if (process.env.DECKTOOLS_INTERACTIVE_DEBUG === '1') {
             // eslint-disable-next-line no-console
-            console.error('[deckops] repairArgv returned null');
+            console.error('[decktools] repairArgv returned null');
           }
           throw e;
         }

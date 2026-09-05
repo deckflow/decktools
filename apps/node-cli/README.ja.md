@@ -1,8 +1,8 @@
 **言語:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | **日本語**
 
-# deckops CLI
+# decktools CLI
 
-Deckops は [Deckflow](https://app.deckflow.com) のコマンドラインツールです。ファイルのアップロード、非同期タスクの作成、タスク状態の確認ができます。
+DeckTools は [Deckflow](https://app.deckflow.com) のコマンドラインツールです。ファイルのアップロード、非同期タスクの作成、タスク状態の確認ができます。
 
 ## 要件
 
@@ -12,16 +12,16 @@ Deckops は [Deckflow](https://app.deckflow.com) のコマンドラインツー�
 ## インストール
 
 ```bash
-npm install -g deckops
-deckops --help
+npm install -g decktools
+decktools --help
 ```
 
 ## クイックスタート
 
-Deckops は、コマンドで必要になったときに認証とワークスペース設定を案内します。
+DeckTools は、コマンドで必要になったときに認証とワークスペース設定を案内します。
 
 ```bash
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 ```
 
 ## グローバルオプション
@@ -36,13 +36,13 @@ deckops convert slides.pptx --to pdf
 
 ```bash
 # JSON モードでタスク一覧
-deckops --json task list --limit 5
+decktools --json task list --limit 5
 
 # バージョンを表示
-deckops --version
+decktools --version
 
 # サブコマンドのヘルプを表示
-deckops convert --help
+decktools convert --help
 ```
 
 ## ファイル圧縮
@@ -61,13 +61,13 @@ Office 文書、動画、zip ファイルを圧縮。拡張子に応じてタス
 
 ```bash
 # PPT プレゼンテーションを圧縮
-deckops compress presentation.pptx
+decktools compress presentation.pptx
 
 # 動画を圧縮して結果を保存
-deckops compress demo.mp4 -o ./output/compressed.mp4
+decktools compress demo.mp4 -o ./output/compressed.mp4
 
 # タスク作成のみ、待機しない
-deckops compress large.pptx --no-wait
+decktools compress large.pptx --no-wait
 ```
 
 ## 情報抽出
@@ -85,13 +85,13 @@ deckops compress large.pptx --no-wait
 
 ```bash
 # pptx からフォント情報を自動抽出
-deckops extract slides.pptx
+decktools extract slides.pptx
 
 # テキストシェイプを明示的に抽出
-deckops extract slides.pptx --type text-shapes
+decktools extract slides.pptx --type text-shapes
 
 # 抽出してディレクトリに保存
-deckops extract slides.pptx --type fonts -o ./extracted/
+decktools extract slides.pptx --type fonts -o ./extracted/
 ```
 
 ## OCR 文字認識
@@ -111,13 +111,13 @@ deckops extract slides.pptx --type fonts -o ./extracted/
 
 ```bash
 # 中国語画像を認識（デフォルト言語）
-deckops ocr scan.jpg
+decktools ocr scan.jpg
 
 # 英語画像を認識
-deckops ocr document.png --language en
+decktools ocr document.png --language en
 
 # 日本語を認識して保存
-deckops ocr receipt.jpg --language ja -o ./ocr-result.json
+decktools ocr receipt.jpg --language ja -o ./ocr-result.json
 ```
 
 ## フォーマット変換
@@ -140,13 +140,13 @@ deckops ocr receipt.jpg --language ja -o ./ocr-result.json
 
 ```bash
 # PPT を PDF に変換
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 
 # 複数 HTML を PPTX にマージ
-deckops convert page1.html page2.html page3.html --to pptx
+decktools convert page1.html page2.html page3.html --to pptx
 
 # HTML を PNG に変換、サイズ指定して保存
-deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
+decktools convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 ```
 
 ## PPT 結合
@@ -164,13 +164,13 @@ deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 
 ```bash
 # 3 つのプレゼンテーションを結合
-deckops join intro.pptx body.pptx appendix.pptx
+decktools join intro.pptx body.pptx appendix.pptx
 
 # タスク名を指定して保存
-deckops join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
+decktools join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
 
 # タスク作成のみ
-deckops join a.pptx b.pptx --no-wait
+decktools join a.pptx b.pptx --no-wait
 ```
 
 ## AI コンテンツ生成
@@ -197,13 +197,13 @@ deckops join a.pptx b.pptx --no-wait
 
 ```bash
 # テキストのみで生成
-deckops create --input-text "製品発表会の企画書を書いて"
+decktools create --input-text "製品発表会の企画書を書いて"
 
 # 参照ファイルとページ数制限付き
-deckops create outline.md --input-text "完全なスピーチ原稿に拡張" --page-count 20
+decktools create outline.md --input-text "完全なスピーチ原稿に拡張" --page-count 20
 
 # 高度なモデル + 検索、結果を保存
-deckops create brief.pdf --input-text "詳細レポートを生成" --advanced-model --enable-search -o ./report/
+decktools create brief.pdf --input-text "詳細レポートを生成" --advanced-model --enable-search -o ./report/
 ```
 
 ## 文書翻訳
@@ -225,13 +225,13 @@ deckops create brief.pdf --input-text "詳細レポートを生成" --advanced-m
 
 ```bash
 # 中国語から英語（Standard モデル）
-deckops translate handbook.docx --from zh --to en --model Standard
+decktools translate handbook.docx --from zh --to en --model Standard
 
 # 英語から中国語、Pro モデル
-deckops translate slides.pptx --from en --to zh --model Pro
+decktools translate slides.pptx --from en --to zh --model Pro
 
 # ソース言語を自動検出、用語集を有効化して保存
-deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
+decktools translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
 ```
 
 ## 汎用タスク実行
@@ -251,13 +251,13 @@ deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o .
 
 ```bash
 # PPT を PDF に（明示的タスクタイプ）
-deckops run convertor.ppt2pdf demo.ppt
+decktools run convertor.ppt2pdf demo.ppt
 
 # PPT を結合
-deckops run pptx.join part1.pptx part2.pptx
+decktools run pptx.join part1.pptx part2.pptx
 
 # HTML を PPTX に変換してパラメータを渡す
-deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
+decktools run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
 ```
 
 ## タスク管理
@@ -274,13 +274,13 @@ workspace 内のタスクを一覧表示。
 
 ```bash
 # 直近 10 件のタスクを表示
-deckops task list --limit 10
+decktools task list --limit 10
 
 # 変換タスクのみ
-deckops task list --type convertor.ppt2pdf --limit 20
+decktools task list --type convertor.ppt2pdf --limit 20
 
 # JSON でページネーション検索
-deckops --json task list --offset 50 --limit 50
+decktools --json task list --offset 50 --limit 50
 ```
 
 ### `task get <task-id>`
@@ -293,13 +293,13 @@ deckops --json task list --offset 50 --limit 50
 
 ```bash
 # タスク詳細を表示
-deckops task get abc123-task-id
+decktools task get abc123-task-id
 
 # タスク結果をファイルにダウンロード
-deckops task get abc123-task-id -o ./result.pdf
+decktools task get abc123-task-id -o ./result.pdf
 
 # JSON モード
-deckops --json task get abc123-task-id
+decktools --json task get abc123-task-id
 ```
 
 ### `task delete <task-id>`
@@ -308,13 +308,13 @@ deckops --json task get abc123-task-id
 
 ```bash
 # タスクを削除
-deckops task delete abc123-task-id
+decktools task delete abc123-task-id
 
 # JSON モード
-deckops --json task delete abc123-task-id
+decktools --json task delete abc123-task-id
 
 # 削除後に一覧を確認
-deckops task delete abc123-task-id && deckops task list --limit 5
+decktools task delete abc123-task-id && decktools task list --limit 5
 ```
 
 ## 対話型補完
@@ -341,4 +341,4 @@ TTY 環境で必須の引数やオプションが不足している場合、CLI 
 ## 関連リンク
 
 - [Deckflow](https://app.deckflow.com)
-- 問題報告：[GitHub Issues](https://github.com/deckflow/deckops/issues)
+- 問題報告：[GitHub Issues](https://github.com/deckflow/decktools/issues)

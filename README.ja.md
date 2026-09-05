@@ -1,13 +1,13 @@
 **言語:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | **日本語**
 
-# Deckops
+# DeckTools
 
-Deckops は Deckflow タスク自動化のための pnpm monorepo です。
+DeckTools は Deckflow タスク自動化のための pnpm monorepo です。
 
 ## パッケージ
 
-- `sdks/typescript` - `@deckops/sdk`、ファイルアップロードとタスク API 用の Node.js とブラウザ対応の TypeScript SDK。
-- `apps/node-cli` - `deckops`、Node.js CLI。使い方は [apps/node-cli/README.ja.md](apps/node-cli/README.ja.md) を参照。
+- `sdks/typescript` - `@decktools/sdk`、ファイルアップロードとタスク API 用の Node.js とブラウザ対応の TypeScript SDK。
+- `apps/node-cli` - `decktools`、Node.js CLI。使い方は [apps/node-cli/README.ja.md](apps/node-cli/README.ja.md) を参照。
 
 ## インストールとビルド
 
@@ -25,30 +25,30 @@ CLI の完全なドキュメント（インストール、設定、すべての�
 ローカルでビルドして実行:
 
 ```bash
-pnpm --filter deckops build
+pnpm --filter decktools build
 node apps/node-cli/dist/cli.js --help
 ```
 
 クイックスタート:
 
 ```bash
-deckops login
-deckops config show
-deckops convert slides.pptx --to pdf
+decktools login
+decktools config show
+decktools convert slides.pptx --to pdf
 ```
 
 ## SDK
 
-`@deckops/sdk` API は [sdks/typescript/README.ja.md](sdks/typescript/README.ja.md) を参照。
+`@decktools/sdk` API は [sdks/typescript/README.ja.md](sdks/typescript/README.ja.md) を参照。
 
 基本的な例:
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
-  token: process.env.DECKOPS_TOKEN,
-  spaceId: process.env.DECKOPS_SPACE_ID,
+  token: process.env.DECKTOOLS_TOKEN,
+  spaceId: process.env.DECKTOOLS_SPACE_ID,
 });
 
 const task = await deck.convertPptToPdf({

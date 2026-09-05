@@ -342,7 +342,7 @@ class TasksClient:
                     if canceled.wait(SSE_RETRY_INTERVAL):
                         return
 
-        thread = threading.Thread(target=run, name=f"deckops-sse-{task_id}", daemon=True)
+        thread = threading.Thread(target=run, name=f"decktools-sse-{task_id}", daemon=True)
         thread.start()
 
         def cancel() -> None:

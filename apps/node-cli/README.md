@@ -1,8 +1,8 @@
 **Languages:** English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# deckops CLI
+# decktools CLI
 
-Deckops is the command-line tool for [Deckflow](https://app.deckflow.com). Use it to upload files, create async tasks, and check task status.
+DeckTools is the command-line tool for [Deckflow](https://app.deckflow.com). Use it to upload files, create async tasks, and check task status.
 
 ## Requirements
 
@@ -12,16 +12,16 @@ Deckops is the command-line tool for [Deckflow](https://app.deckflow.com). Use i
 ## Installation
 
 ```bash
-npm install -g deckops
-deckops --help
+npm install -g decktools
+decktools --help
 ```
 
 ## Quick start
 
-Deckops will guide you through authentication and workspace setup when a command needs it.
+DeckTools will guide you through authentication and workspace setup when a command needs it.
 
 ```bash
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 ```
 
 ## Global options
@@ -36,13 +36,13 @@ Examples:
 
 ```bash
 # List tasks in JSON mode
-deckops --json task list --limit 5
+decktools --json task list --limit 5
 
 # View version
-deckops --version
+decktools --version
 
 # View help for a subcommand
-deckops convert --help
+decktools convert --help
 ```
 
 ## File compression
@@ -61,13 +61,13 @@ Supported formats: `.zip`, `.pptx`, `.key`, `.docx`, `.xlsx`, `.mp4`, `.avi`, `.
 
 ```bash
 # Compress a PPT presentation
-deckops compress presentation.pptx
+decktools compress presentation.pptx
 
 # Compress video and save result
-deckops compress demo.mp4 -o ./output/compressed.mp4
+decktools compress demo.mp4 -o ./output/compressed.mp4
 
 # Create task only, do not wait
-deckops compress large.pptx --no-wait
+decktools compress large.pptx --no-wait
 ```
 
 ## Information extraction
@@ -85,13 +85,13 @@ Extract fonts, text shapes, and other information from a file.
 
 ```bash
 # Auto-extract font info from pptx
-deckops extract slides.pptx
+decktools extract slides.pptx
 
 # Explicitly extract text shapes
-deckops extract slides.pptx --type text-shapes
+decktools extract slides.pptx --type text-shapes
 
 # Extract and save to directory
-deckops extract slides.pptx --type fonts -o ./extracted/
+decktools extract slides.pptx --type fonts -o ./extracted/
 ```
 
 ## OCR text recognition
@@ -111,13 +111,13 @@ Supported languages: `zh-hans`, `zh-hant`, `en`, `ja`, `ko`, `ar`, `de`, `es`, `
 
 ```bash
 # Recognize Chinese image (default language)
-deckops ocr scan.jpg
+decktools ocr scan.jpg
 
 # Recognize English image
-deckops ocr document.png --language en
+decktools ocr document.png --language en
 
 # Recognize Japanese and save
-deckops ocr receipt.jpg --language ja -o ./ocr-result.json
+decktools ocr receipt.jpg --language ja -o ./ocr-result.json
 ```
 
 ## Format conversion
@@ -140,13 +140,13 @@ Convert files to the specified format.
 
 ```bash
 # PPT to PDF
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 
 # Merge multiple HTML files into PPTX
-deckops convert page1.html page2.html page3.html --to pptx
+decktools convert page1.html page2.html page3.html --to pptx
 
 # HTML to PNG with dimensions and save
-deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
+decktools convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 ```
 
 ## PPT merge
@@ -164,13 +164,13 @@ Merge multiple `.pptx` files in the given order into one (task type `pptx.join`)
 
 ```bash
 # Merge three presentations
-deckops join intro.pptx body.pptx appendix.pptx
+decktools join intro.pptx body.pptx appendix.pptx
 
 # Specify output task name and save
-deckops join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
+decktools join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
 
 # Create task only
-deckops join a.pptx b.pptx --no-wait
+decktools join a.pptx b.pptx --no-wait
 ```
 
 ## AI content generation
@@ -197,13 +197,13 @@ Up to 2 reference files supported: `.html`, `.pdf`, `.docx`, `.pptx`, `.txt`, `.
 
 ```bash
 # Pure text generation
-deckops create --input-text "Write a product launch plan"
+decktools create --input-text "Write a product launch plan"
 
 # With reference file and page limit
-deckops create outline.md --input-text "Expand into a full speech" --page-count 20
+decktools create outline.md --input-text "Expand into a full speech" --page-count 20
 
 # Advanced model + search, and save result
-deckops create brief.pdf --input-text "Generate a detailed report" --advanced-model --enable-search -o ./report/
+decktools create brief.pdf --input-text "Generate a detailed report" --advanced-model --enable-search -o ./report/
 ```
 
 ## Document translation
@@ -225,13 +225,13 @@ Translate document files. Supports `.docx`, `.pptx`, `.pdf`, `.xlsx`, `.key`.
 
 ```bash
 # Chinese to English (Standard model)
-deckops translate handbook.docx --from zh --to en --model Standard
+decktools translate handbook.docx --from zh --to en --model Standard
 
 # English to Chinese, Pro model
-deckops translate slides.pptx --from en --to zh --model Pro
+decktools translate slides.pptx --from en --to zh --model Pro
 
 # Auto-detect source language, enable glossary and save
-deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
+decktools translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
 ```
 
 ## Generic task execution
@@ -251,13 +251,13 @@ Execute with an explicit task type. Suitable for advanced usage or tasks not wra
 
 ```bash
 # PPT to PDF (explicit task type)
-deckops run convertor.ppt2pdf demo.ppt
+decktools run convertor.ppt2pdf demo.ppt
 
 # Merge PPT
-deckops run pptx.join part1.pptx part2.pptx
+decktools run pptx.join part1.pptx part2.pptx
 
 # HTML to PPTX with parameters
-deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
+decktools run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
 ```
 
 ## Task management
@@ -274,13 +274,13 @@ List tasks in the workspace.
 
 ```bash
 # List 10 most recent tasks
-deckops task list --limit 10
+decktools task list --limit 10
 
 # Conversion tasks only
-deckops task list --type convertor.ppt2pdf --limit 20
+decktools task list --type convertor.ppt2pdf --limit 20
 
 # Paginated JSON query
-deckops --json task list --offset 50 --limit 50
+decktools --json task list --offset 50 --limit 50
 ```
 
 ### `task get <task-id>`
@@ -293,13 +293,13 @@ Get details for a single task.
 
 ```bash
 # View task details
-deckops task get abc123-task-id
+decktools task get abc123-task-id
 
 # Download task result to file
-deckops task get abc123-task-id -o ./result.pdf
+decktools task get abc123-task-id -o ./result.pdf
 
 # JSON mode
-deckops --json task get abc123-task-id
+decktools --json task get abc123-task-id
 ```
 
 ### `task delete <task-id>`
@@ -308,13 +308,13 @@ Delete a specified task.
 
 ```bash
 # Delete task
-deckops task delete abc123-task-id
+decktools task delete abc123-task-id
 
 # JSON mode
-deckops --json task delete abc123-task-id
+decktools --json task delete abc123-task-id
 
 # Confirm list after deletion
-deckops task delete abc123-task-id && deckops task list --limit 5
+decktools task delete abc123-task-id && decktools task list --limit 5
 ```
 
 ## Interactive completion
@@ -341,4 +341,4 @@ Only some tasks support ordered multi-source: `convert` for `html → pptx`, `jo
 ## Related links
 
 - [Deckflow](https://app.deckflow.com)
-- Issue tracker: [GitHub Issues](https://github.com/deckflow/deckops/issues)
+- Issue tracker: [GitHub Issues](https://github.com/deckflow/decktools/issues)

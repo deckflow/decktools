@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Deckflow CLI - Main entry point
+ * DeckTools CLI - Main entry point
  */
 
 import { Command, CommanderError } from 'commander';
@@ -37,8 +37,8 @@ async function main() {
   const program = new Command();
 
   program
-    .name('deckflow')
-    .description('Deckflow CLI - File processing and conversion tools')
+    .name('decktools')
+    .description('DeckTools CLI - File processing and conversion tools')
     .version(CLI_VERSION)
     .option('--json', 'Output in JSON format')
     .hook('preAction', (thisCommand) => {

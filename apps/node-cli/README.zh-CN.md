@@ -1,8 +1,8 @@
 **语言：** [English](README.md) | **简体中文** | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# deckops CLI
+# decktools CLI
 
-Deckops 是 [Deckflow](https://app.deckflow.com) 的命令行工具，用于上传文件、创建异步任务，以及查看任务状态。
+DeckTools 是 [Deckflow](https://app.deckflow.com) 的命令行工具，用于上传文件、创建异步任务，以及查看任务状态。
 
 ## 环境要求
 
@@ -12,16 +12,16 @@ Deckops 是 [Deckflow](https://app.deckflow.com) 的命令行工具，用于上�
 ## 安装
 
 ```bash
-npm install -g deckops
-deckops --help
+npm install -g decktools
+decktools --help
 ```
 
 ## 快速开始
 
-Deckops 会在命令需要时引导你完成认证和工作区设置。
+DeckTools 会在命令需要时引导你完成认证和工作区设置。
 
 ```bash
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 ```
 
 ## 全局选项
@@ -36,13 +36,13 @@ deckops convert slides.pptx --to pdf
 
 ```bash
 # JSON 模式列出任务
-deckops --json task list --limit 5
+decktools --json task list --limit 5
 
 # 查看版本
-deckops --version
+decktools --version
 
 # 查看某子命令帮助
-deckops convert --help
+decktools convert --help
 ```
 
 ## 文件压缩
@@ -61,13 +61,13 @@ deckops convert --help
 
 ```bash
 # 压缩 PPT 演示文稿
-deckops compress presentation.pptx
+decktools compress presentation.pptx
 
 # 压缩视频并保存结果
-deckops compress demo.mp4 -o ./output/compressed.mp4
+decktools compress demo.mp4 -o ./output/compressed.mp4
 
 # 仅创建任务，不等待完成
-deckops compress large.pptx --no-wait
+decktools compress large.pptx --no-wait
 ```
 
 ## 信息提取
@@ -85,13 +85,13 @@ deckops compress large.pptx --no-wait
 
 ```bash
 # 从 pptx 自动提取字体信息
-deckops extract slides.pptx
+decktools extract slides.pptx
 
 # 显式指定提取文本形状
-deckops extract slides.pptx --type text-shapes
+decktools extract slides.pptx --type text-shapes
 
 # 提取并保存到目录
-deckops extract slides.pptx --type fonts -o ./extracted/
+decktools extract slides.pptx --type fonts -o ./extracted/
 ```
 
 ## OCR 文字识别
@@ -111,13 +111,13 @@ deckops extract slides.pptx --type fonts -o ./extracted/
 
 ```bash
 # 识别中文图片（默认语言）
-deckops ocr scan.jpg
+decktools ocr scan.jpg
 
 # 识别英文图片
-deckops ocr document.png --language en
+decktools ocr document.png --language en
 
 # 识别日文并保存
-deckops ocr receipt.jpg --language ja -o ./ocr-result.json
+decktools ocr receipt.jpg --language ja -o ./ocr-result.json
 ```
 
 ## 格式转换
@@ -140,13 +140,13 @@ deckops ocr receipt.jpg --language ja -o ./ocr-result.json
 
 ```bash
 # PPT 转 PDF
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 
 # 多个 HTML 合并转 PPTX
-deckops convert page1.html page2.html page3.html --to pptx
+decktools convert page1.html page2.html page3.html --to pptx
 
 # HTML 转 PNG，指定尺寸并保存
-deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
+decktools convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 ```
 
 ## PPT 合并
@@ -164,13 +164,13 @@ deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 
 ```bash
 # 合并三段演示文稿
-deckops join intro.pptx body.pptx appendix.pptx
+decktools join intro.pptx body.pptx appendix.pptx
 
 # 指定输出任务名并保存
-deckops join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
+decktools join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
 
 # 仅创建任务
-deckops join a.pptx b.pptx --no-wait
+decktools join a.pptx b.pptx --no-wait
 ```
 
 ## AI 内容生成
@@ -197,13 +197,13 @@ deckops join a.pptx b.pptx --no-wait
 
 ```bash
 # 纯文本生成
-deckops create --input-text "请写一份产品发布会方案"
+decktools create --input-text "请写一份产品发布会方案"
 
 # 带参考文件和页数限制
-deckops create outline.md --input-text "扩展为完整演讲稿" --page-count 20
+decktools create outline.md --input-text "扩展为完整演讲稿" --page-count 20
 
 # 高级模型 + 搜索，并保存结果
-deckops create brief.pdf --input-text "生成详细报告" --advanced-model --enable-search -o ./report/
+decktools create brief.pdf --input-text "生成详细报告" --advanced-model --enable-search -o ./report/
 ```
 
 ## 文档翻译
@@ -225,13 +225,13 @@ deckops create brief.pdf --input-text "生成详细报告" --advanced-model --en
 
 ```bash
 # 中译英（Standard 模型）
-deckops translate handbook.docx --from zh --to en --model Standard
+decktools translate handbook.docx --from zh --to en --model Standard
 
 # 英译中，Pro 模型
-deckops translate slides.pptx --from en --to zh --model Pro
+decktools translate slides.pptx --from en --to zh --model Pro
 
 # 自动检测源语言，启用术语表并保存
-deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
+decktools translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
 ```
 
 ## 通用任务执行
@@ -251,13 +251,13 @@ deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o .
 
 ```bash
 # PPT 转 PDF（显式任务类型）
-deckops run convertor.ppt2pdf demo.ppt
+decktools run convertor.ppt2pdf demo.ppt
 
 # 合并 PPT
-deckops run pptx.join part1.pptx part2.pptx
+decktools run pptx.join part1.pptx part2.pptx
 
 # HTML 转 PPTX 并传参
-deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
+decktools run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
 ```
 
 ## 任务管理
@@ -274,13 +274,13 @@ deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param
 
 ```bash
 # 列出最近 10 条任务
-deckops task list --limit 10
+decktools task list --limit 10
 
 # 只看转换类任务
-deckops task list --type convertor.ppt2pdf --limit 20
+decktools task list --type convertor.ppt2pdf --limit 20
 
 # JSON 分页查询
-deckops --json task list --offset 50 --limit 50
+decktools --json task list --offset 50 --limit 50
 ```
 
 ### `task get <task-id>`
@@ -293,13 +293,13 @@ deckops --json task list --offset 50 --limit 50
 
 ```bash
 # 查看任务详情
-deckops task get abc123-task-id
+decktools task get abc123-task-id
 
 # 下载任务结果到文件
-deckops task get abc123-task-id -o ./result.pdf
+decktools task get abc123-task-id -o ./result.pdf
 
 # JSON 模式
-deckops --json task get abc123-task-id
+decktools --json task get abc123-task-id
 ```
 
 ### `task delete <task-id>`
@@ -308,13 +308,13 @@ deckops --json task get abc123-task-id
 
 ```bash
 # 删除任务
-deckops task delete abc123-task-id
+decktools task delete abc123-task-id
 
 # JSON 模式
-deckops --json task delete abc123-task-id
+decktools --json task delete abc123-task-id
 
 # 删除后确认列表
-deckops task delete abc123-task-id && deckops task list --limit 5
+decktools task delete abc123-task-id && decktools task list --limit 5
 ```
 
 ## 交互式补全
@@ -341,4 +341,4 @@ deckops task delete abc123-task-id && deckops task list --limit 5
 ## 相关链接
 
 - [Deckflow](https://app.deckflow.com)
-- 问题反馈：[GitHub Issues](https://github.com/deckflow/deckops/issues)
+- 问题反馈：[GitHub Issues](https://github.com/deckflow/decktools/issues)

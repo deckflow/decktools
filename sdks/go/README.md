@@ -1,11 +1,11 @@
-# deckops Go SDK
+# decktools Go SDK
 
-Go SDK for Deckops/Deckflow task APIs.
+Go SDK for DeckTools/Deckflow task APIs.
 
 ## Install
 
 ```bash
-go get github.com/deckops/deckops/sdks/go
+go get github.com/deckflow/decktools/sdks/go
 ```
 
 ## Create a Client
@@ -18,23 +18,23 @@ import (
 	"log"
 	"os"
 
-	deckops "github.com/deckops/deckops/sdks/go"
+	decktools "github.com/deckflow/decktools/sdks/go"
 )
 
 func main() {
 	ctx := context.Background()
-	deck, err := deckops.New(ctx, deckops.ClientOptions{
-		Token:   os.Getenv("DECKOPS_TOKEN"),
-		APIKey:  os.Getenv("DECKOPS_API_KEY"),
-		SpaceID: os.Getenv("DECKOPS_SPACE_ID"),
+	deck, err := decktools.New(ctx, decktools.ClientOptions{
+		Token:   os.Getenv("DECKTOOLS_TOKEN"),
+		APIKey:  os.Getenv("DECKTOOLS_API_KEY"),
+		SpaceID: os.Getenv("DECKTOOLS_SPACE_ID"),
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	task, err := deck.ConvertPptToPDF(ctx, deckops.TaskShortcutParams{
-		Files: []deckops.TaskUploadInput{{
-			Input: deckops.UploadInput{Path: "./slides.pptx"},
+	task, err := deck.ConvertPptToPDF(ctx, decktools.TaskShortcutParams{
+		Files: []decktools.TaskUploadInput{{
+			Input: decktools.UploadInput{Path: "./slides.pptx"},
 		}},
 		Name: "slides",
 	})
@@ -42,7 +42,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	done, err := deck.Tasks.Wait(ctx, task.ID, deckops.WaitForTaskOptions{})
+	done, err := deck.Tasks.Wait(ctx, task.ID, decktools.WaitForTaskOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,24 +61,24 @@ func main() {
 - `OnUnauthorized` is called once after a 401; the request is retried with returned credentials.
 - `OnPaymentRequired` is called once after a 402; the request is retried after it returns.
 
-By default, the SDK persists `X-Auth-UUID` in `~/.deckflow/auth-uuid`. Set `DECKFLOW_CONFIG_DIR` to change that directory, or `DECKOPS_AUTH_UUID` to force a fixed UUID.
+By default, the SDK persists `X-Auth-UUID` in `~/.deckflow/auth-uuid`. Set `DECKFLOW_CONFIG_DIR` to change that directory, or `DECKTOOLS_AUTH_UUID` to force a fixed UUID.
 
 ## Tasks
 
 ```go
-task, err := deck.Tasks.Create(ctx, deckops.CreateTaskParams{
-	Type:    deckops.TaskConvertPptToPDF,
+task, err := deck.Tasks.Create(ctx, decktools.CreateTaskParams{
+	Type:    decktools.TaskConvertPptToPDF,
 	FileIDs: []string{"file-1"},
 	Params:  map[string]any{},
 })
 
-list, err := deck.Tasks.List(ctx, deckops.ListTasksParams{
-	Type: deckops.TaskConvertPptToPDF,
+list, err := deck.Tasks.List(ctx, decktools.ListTasksParams{
+	Type: decktools.TaskConvertPptToPDF,
 })
 
 got, err := deck.Tasks.Get(ctx, task.ID, false)
-done, err := deck.Tasks.Wait(ctx, task.ID, deckops.WaitForTaskOptions{})
-err = deck.Tasks.Down(ctx, task.ID, deckops.TaskDownloadOptions{}, &out)
+done, err := deck.Tasks.Wait(ctx, task.ID, decktools.WaitForTaskOptions{})
+err = deck.Tasks.Down(ctx, task.ID, decktools.TaskDownloadOptions{}, &out)
 err = deck.Tasks.Delete(ctx, task.ID)
 _ = list
 _ = got
@@ -94,12 +94,12 @@ for it, and returns what `Output` asked for. Markdown is rendered by the
 backend — the SDK does no conversion of its own.
 
 ```go
-input := deckops.TaskUploadInput{
-	Input: deckops.UploadInput{Path: "./slides.pptx"},
+input := decktools.TaskUploadInput{
+	Input: decktools.UploadInput{Path: "./slides.pptx"},
 }
 
 // Markdown only (the default): the structured result is dropped server-side.
-res, err := deck.Parse(ctx, deckops.ParseSource{File: &input}, deckops.ParseOptions{})
+res, err := deck.Parse(ctx, decktools.ParseSource{File: &input}, decktools.ParseOptions{})
 if err != nil {
 	log.Fatal(err)
 }
@@ -118,13 +118,13 @@ log.Println(res.Markdown)
 returns:
 
 ```go
-res, err := deck.Parse(ctx, deckops.ParseSource{File: &input}, deckops.ParseOptions{
-	Output: deckops.ParseOutputIR,
+res, err := deck.Parse(ctx, decktools.ParseSource{File: &input}, decktools.ParseOptions{
+	Output: decktools.ParseOutputIR,
 })
 if err != nil {
 	log.Fatal(err)
 }
-var document deckops.PptxParseResult
+var document decktools.PptxParseResult
 if err := json.Unmarshal(res.Result, &document); err != nil {
 	log.Fatal(err)
 }
@@ -137,20 +137,20 @@ for `.key`:
 
 ```go
 pages := true
-res, err := deck.Parse(ctx, deckops.ParseSource{File: &input}, deckops.ParseOptions{
-	Output:        deckops.ParseOutputAll,
+res, err := deck.Parse(ctx, decktools.ParseSource{File: &input}, decktools.ParseOptions{
+	Output:        decktools.ParseOutputAll,
 	MarkdownPages: &pages,
 })
-// res.MarkdownPages[i] is page i; res.Markdown joins them with deckops.PageSeparator.
+// res.MarkdownPages[i] is page i; res.Markdown joins them with decktools.PageSeparator.
 ```
 
 Links go through the same call:
 
 ```go
-res, err := deck.Parse(ctx, deckops.ParseSource{
+res, err := deck.Parse(ctx, decktools.ParseSource{
 	URL:  "https://example.com/article",
-	Mode: deckops.ParseModeRuntime,
-}, deckops.ParseOptions{})
+	Mode: decktools.ParseModeRuntime,
+}, decktools.ParseOptions{})
 ```
 
 Supported file extensions are `.pdf`, `.pptx`, `.docx`, and `.key`. For an
@@ -172,9 +172,9 @@ older backends.
 ## Uploads
 
 ```go
-file, err := deck.Files.Upload(ctx, deckops.UploadInput{
+file, err := deck.Files.Upload(ctx, decktools.UploadInput{
 	Path: "./slides.pptx",
-}, deckops.UploadOptions{
+}, decktools.UploadOptions{
 	OnProgress: func(p float64) {
 		log.Printf("%.0f%%", p*100)
 	},

@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	deckops "github.com/deckops/deckops/sdks/go"
+	decktools "github.com/deckflow/decktools/sdks/go"
 )
 
 const (
@@ -113,7 +113,7 @@ type appContext struct {
 	configDir   string
 	configPath  string
 	json        bool
-	client      *deckops.Client
+	client      *decktools.Client
 	loginMu     sync.Mutex
 	loginWaiter *loginWaiter
 }
@@ -180,7 +180,7 @@ func run(args []string) error {
 }
 
 func resolveConfigDir(home string) string {
-	for _, key := range []string{"DECKFLOW_CONFIG_DIR", "DECKHTML_CONFIG_DIR", "DECKOPS_CONFIG_DIR"} {
+	for _, key := range []string{"DECKFLOW_CONFIG_DIR"} {
 		if dir := os.Getenv(key); dir != "" {
 			return dir
 		}
@@ -240,10 +240,10 @@ func dispatch(ctx *appContext, args []string) error {
 }
 
 func printHelp() {
-	fmt.Println(`Deckflow CLI - File processing and conversion tools
+	fmt.Println(`DeckTools CLI - File processing and conversion tools
 
 Usage:
-  deckops [--json] <command> [options]
+  decktools [--json] <command> [options]
 
 Commands:
   config      Manage configuration
@@ -274,7 +274,7 @@ func printCommandHelp(args []string) bool {
 		return printConfigHelp(args[1:])
 	case "login":
 		fmt.Println(`Usage:
-  deckops login [options]
+  decktools login [options]
 
 Login to Deckflow and save authentication token
 
@@ -285,7 +285,7 @@ Options:
 		return printTaskHelp(args[1:])
 	case "compress":
 		fmt.Println(`Usage:
-  deckops compress [options] <input-file>
+  decktools compress [options] <input-file>
 
 Compress a file
 
@@ -296,7 +296,7 @@ Options:
   -h, --help           display help for command`)
 	case "extract":
 		fmt.Println(`Usage:
-  deckops extract [options] <input-file>
+  decktools extract [options] <input-file>
 
 Extract information from a file (fonts, text-shapes)
 
@@ -308,7 +308,7 @@ Options:
   -h, --help           display help for command`)
 	case "ocr":
 		fmt.Printf(`Usage:
-  deckops ocr [options] <input-file>
+  decktools ocr [options] <input-file>
 
 Extract text from images using OCR
 
@@ -321,7 +321,7 @@ Options:
 `, strings.Join(ocrLanguages, ", "), defaultOCRLanguage)
 	case "convert":
 		fmt.Printf(`Usage:
-  deckops convert [options] <input-files...>
+  decktools convert [options] <input-files...>
 
 Convert file(s) to a different format
 
@@ -336,14 +336,14 @@ Options:
   -h, --help                display help for command
 
 Examples:
-  $ deckops convert slides.pptx --to pdf
-  $ deckops convert page1.html page2.html --to pptx
+  $ decktools convert slides.pptx --to pdf
+  $ decktools convert page1.html page2.html --to pptx
 
 Multiple input files create one ordered conversion task only for html -> pptx.
 `, strings.Join(keysNested(renderFormats), ", "))
 	case "join":
 		fmt.Println(`Usage:
-  deckops join [options] <input-files...>
+  decktools join [options] <input-files...>
 
 Merge multiple pptx files into one (in the given order)
 
@@ -355,12 +355,12 @@ Options:
   -h, --help           display help for command
 
 Example:
-  $ deckops join intro.pptx body.pptx appendix.pptx
+  $ decktools join intro.pptx body.pptx appendix.pptx
 
 Files are merged into one task in the order provided.`)
 	case "create":
 		fmt.Println(`Usage:
-  deckops create [options] [input-files...]
+  decktools create [options] [input-files...]
 
 Create document content
 
@@ -379,7 +379,7 @@ Options:
   -h, --help                display help for command`)
 	case "translate":
 		fmt.Printf(`Usage:
-  deckops translate [options] <input-file>
+  decktools translate [options] <input-file>
 
 Translate a document file
 
@@ -396,7 +396,7 @@ Options:
 `, strings.Join(sourceLanguages, ", "), strings.Join(targetLanguages, ", "))
 	case "run":
 		fmt.Printf(`Usage:
-  deckops run [options] <task-type> <input-files...>
+  decktools run [options] <task-type> <input-files...>
 
 Run a task with explicit type
 
@@ -408,9 +408,9 @@ Options:
   -h, --help           display help for command
 
 Examples:
-  $ deckops run convertor.ppt2pdf demo.ppt
-  $ deckops run pptx.join part1.pptx part2.pptx
-  $ deckops run convertor.html2pptx page1.html page2.html
+  $ decktools run convertor.ppt2pdf demo.ppt
+  $ decktools run pptx.join part1.pptx part2.pptx
+  $ decktools run convertor.html2pptx page1.html page2.html
 
 Multiple input files are passed as one ordered source set only for: %s.
 `, strings.Join(multiSourceTaskTypes, ", "))
@@ -425,7 +425,7 @@ func printConfigHelp(args []string) bool {
 	switch sub {
 	case "":
 		fmt.Println(`Usage:
-  deckops config <command>
+  decktools config <command>
 
 Manage configuration
 
@@ -440,7 +440,7 @@ Options:
   -h, --help              display help for command`)
 	case "set-token":
 		fmt.Println(`Usage:
-  deckops config set-token <token>
+  decktools config set-token <token>
 
 Set authentication token
 
@@ -448,7 +448,7 @@ Options:
   -h, --help  display help for command`)
 	case "set-api-key":
 		fmt.Println(`Usage:
-  deckops config set-api-key <api-key>
+  decktools config set-api-key <api-key>
 
 Set API key (shared with deckhtml at ~/.deckflow/credentials)
 
@@ -456,7 +456,7 @@ Options:
   -h, --help  display help for command`)
 	case "set-space":
 		fmt.Println(`Usage:
-  deckops config set-space <space-id>
+  decktools config set-space <space-id>
 
 Set workspace/space ID
 
@@ -464,7 +464,7 @@ Options:
   -h, --help  display help for command`)
 	case "set-api-base":
 		fmt.Println(`Usage:
-  deckops config set-api-base <url>
+  decktools config set-api-base <url>
 
 Set API base URL
 
@@ -472,7 +472,7 @@ Options:
   -h, --help  display help for command`)
 	case "show":
 		fmt.Println(`Usage:
-  deckops config show
+  decktools config show
 
 Show current configuration
 
@@ -489,7 +489,7 @@ func printTaskHelp(args []string) bool {
 	switch sub {
 	case "":
 		fmt.Println(`Usage:
-  deckops task <command>
+  decktools task <command>
 
 Manage tasks
 
@@ -502,7 +502,7 @@ Options:
   -h, --help            display help for command`)
 	case "list":
 		fmt.Println(`Usage:
-  deckops task list [options]
+  decktools task list [options]
 
 List all tasks
 
@@ -513,7 +513,7 @@ Options:
   -h, --help         display help for command`)
 	case "get":
 		fmt.Println(`Usage:
-  deckops task get [options] <task-id>
+  decktools task get [options] <task-id>
 
 Get task details
 
@@ -522,7 +522,7 @@ Options:
   -h, --help         display help for command`)
 	case "delete":
 		fmt.Println(`Usage:
-  deckops task delete <task-id>
+  decktools task delete <task-id>
 
 Delete a task
 
@@ -560,7 +560,7 @@ func (c *appContext) loadConfig() error {
 
 func (c *appContext) applyConfigDefaults() {
 	if c.config.APIBase == "" {
-		c.config.APIBase = deckops.DefaultRoot
+		c.config.APIBase = decktools.DefaultRoot
 	}
 }
 
@@ -569,77 +569,75 @@ func (c *appContext) saveConfig() error {
 		return err
 	}
 
-	// Re-read before write so deckhtml-owned fields are not wiped.
-	existing := configData{}
+	// Re-read before write so other products' and unknown fields survive.
+	existing := map[string]any{}
 	if raw, err := os.ReadFile(c.configPath); err == nil {
-		_ = json.Unmarshal(raw, &existing)
+		if err := json.Unmarshal(raw, &existing); err != nil || existing == nil {
+			return fmt.Errorf("invalid shared credentials: %s", c.configPath)
+		}
 	}
-	merged := existing
-	if c.config.APIKey != "" {
-		merged.APIKey = c.config.APIKey
-	} else {
-		merged.APIKey = ""
+	for key, value := range map[string]string{
+		"apiKey": c.config.APIKey, "token": c.config.Token,
+		"spaceId": c.config.SpaceID, "apiBase": c.config.APIBase,
+	} {
+		if value == "" {
+			delete(existing, key)
+		} else {
+			existing[key] = value
+		}
 	}
-	if c.config.Token != "" {
-		merged.Token = c.config.Token
-	} else {
-		merged.Token = ""
-	}
-	if c.config.SpaceID != "" {
-		merged.SpaceID = c.config.SpaceID
-	} else {
-		merged.SpaceID = ""
-	}
-	if c.config.APIBase != "" {
-		merged.APIBase = c.config.APIBase
-	} else {
-		merged.APIBase = ""
-	}
-	// Preserve webhook / retentionHours from disk unless we explicitly hold them.
-	if c.config.Webhook != "" {
-		merged.Webhook = c.config.Webhook
-	}
-	if c.config.RetentionHours != nil {
-		merged.RetentionHours = c.config.RetentionHours
-	}
-
-	c.config = merged
-	data, err := json.MarshalIndent(merged, "", "  ")
+	data, err := json.MarshalIndent(existing, "", "  ")
 	if err != nil {
 		return err
 	}
 	data = append(data, '\n')
-	return os.WriteFile(c.configPath, data, 0o600)
+	if err := os.WriteFile(c.configPath, data, 0o600); err != nil {
+		return err
+	}
+	return os.Chmod(c.configPath, 0o600)
 }
 
 func (c *appContext) apiBase() string {
+	if value := environmentCredential("API_BASE", ""); value != "" {
+		return value
+	}
 	if c.config.APIBase != "" {
 		return c.config.APIBase
 	}
-	return deckops.DefaultRoot
+	return decktools.DefaultRoot
 }
 
-func (c *appContext) getClient(ctx context.Context) (*deckops.Client, error) {
+// Product-scoped environment overrides never get written into shared credentials.
+func environmentCredential(suffix, stored string) string {
+	for _, prefix := range []string{"DECKTOOLS_", "DECKFLOW_"} {
+		if value := strings.TrimSpace(os.Getenv(prefix + suffix)); value != "" {
+			return value
+		}
+	}
+	return stored
+}
+
+func (c *appContext) getClient(ctx context.Context) (*decktools.Client, error) {
 	if c.client != nil {
 		return c.client, nil
 	}
-	client, err := deckops.New(ctx, deckops.ClientOptions{
+	client, err := decktools.New(ctx, decktools.ClientOptions{
 		Root:    c.apiBase(),
-		Token:   c.config.Token,
-		APIKey:  c.config.APIKey,
-		SpaceID: c.config.SpaceID,
-		OnUnauthorized: func(ctx context.Context) (deckops.AuthRefresh, error) {
+		Token:   environmentCredential("TOKEN", c.config.Token),
+		APIKey:  environmentCredential("API_KEY", c.config.APIKey),
+		SpaceID: environmentCredential("SPACE_ID", c.config.SpaceID),
+		OnUnauthorized: func(ctx context.Context) (decktools.AuthRefresh, error) {
 			// First-time visit (no token yet) feels like an explicit login;
 			// an expired token reads as "auth expired".
 			reason := "unauthorized"
-			if c.config.Token == "" {
+			if environmentCredential("TOKEN", c.config.Token) == "" {
 				reason = "explicit"
 			}
 			token, err := c.ensureLoggedIn(ctx, defaultLoginPort, reason)
 			if err != nil {
-				return deckops.AuthRefresh{}, err
+				return decktools.AuthRefresh{}, err
 			}
-			return deckops.AuthRefresh{Token: token, SpaceID: c.config.SpaceID}, nil
+			return decktools.AuthRefresh{Token: token, SpaceID: c.config.SpaceID}, nil
 		},
 		OnPaymentRequired: func(ctx context.Context) error {
 			return c.ensureCheckout(ctx, defaultLoginPort)
@@ -667,7 +665,7 @@ func (c *appContext) output(data any, human func() string) {
 func (c *appContext) outputError(err error, code string) {
 	if c.json {
 		payload := map[string]any{"error": err.Error(), "code": code}
-		var apiErr *deckops.APIError
+		var apiErr *decktools.APIError
 		if errors.As(err, &apiErr) {
 			if apiErr.RequestID != "" {
 				payload["requestId"] = apiErr.RequestID
@@ -705,7 +703,7 @@ func (c *appContext) runConfig(args []string) error {
 	switch args[0] {
 	case "set-token":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: deckops config set-token <token>")
+			return fmt.Errorf("usage: decktools config set-token <token>")
 		}
 		c.config.Token = args[1]
 		if err := c.saveConfig(); err != nil {
@@ -714,7 +712,7 @@ func (c *appContext) runConfig(args []string) error {
 		c.output(map[string]any{"token": args[1], "message": "Token set successfully"}, func() string { return "Token set successfully" })
 	case "set-api-key":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: deckops config set-api-key <api-key>")
+			return fmt.Errorf("usage: decktools config set-api-key <api-key>")
 		}
 		c.config.APIKey = args[1]
 		if err := c.saveConfig(); err != nil {
@@ -723,7 +721,7 @@ func (c *appContext) runConfig(args []string) error {
 		c.output(map[string]any{"apiKey": args[1], "message": "API key set successfully"}, func() string { return "API key set successfully" })
 	case "set-space":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: deckops config set-space <space-id>")
+			return fmt.Errorf("usage: decktools config set-space <space-id>")
 		}
 		c.config.SpaceID = args[1]
 		if err := c.saveConfig(); err != nil {
@@ -732,7 +730,7 @@ func (c *appContext) runConfig(args []string) error {
 		c.output(map[string]any{"spaceId": args[1], "message": "Space ID set successfully"}, func() string { return "Space ID set successfully" })
 	case "set-api-base":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: deckops config set-api-base <url>")
+			return fmt.Errorf("usage: decktools config set-api-base <url>")
 		}
 		if !isValidURL(args[1]) {
 			return fmt.Errorf("Invalid API base URL: %s", args[1])
@@ -770,8 +768,8 @@ func (c *appContext) runConfig(args []string) error {
 			if wh, ok := display["webhook"]; ok {
 				lines = append(lines, "webhook: "+valueOrUnset(wh))
 			}
-			if c.config.Token == "" && c.config.APIKey == "" {
-				lines = append(lines, "Tip: credentials missing. Please run `deckops login` or set an API key first.")
+			if environmentCredential("TOKEN", c.config.Token) == "" && environmentCredential("API_KEY", c.config.APIKey) == "" {
+				lines = append(lines, "Tip: credentials missing. Please run `decktools login` or set an API key first.")
 			}
 			return strings.Join(lines, "\n")
 		})
@@ -801,7 +799,7 @@ func (c *appContext) runLogin(args []string) error {
 		return err
 	}
 	if len(rest) != 0 {
-		return fmt.Errorf("usage: deckops login [--port <port>]")
+		return fmt.Errorf("usage: decktools login [--port <port>]")
 	}
 	port, err := positiveInt(opts.first("port"), "--port")
 	if err != nil {
@@ -812,7 +810,7 @@ func (c *appContext) runLogin(args []string) error {
 	}
 	if !c.json {
 		fmt.Println("\nToken saved successfully!")
-		fmt.Println("\nYou can now use Deckflow CLI commands.")
+		fmt.Println("\nYou can now use DeckTools CLI commands.")
 	}
 	c.output(map[string]any{"success": true, "message": "Login successful"}, func() string { return "Login successful!" })
 	return nil
@@ -896,13 +894,15 @@ func (c *appContext) runLoginFlow(ctx context.Context, port int, reason string) 
 }
 
 func (c *appContext) ensureCheckout(ctx context.Context, port int) error {
-	if c.config.Token == "" {
+	token := environmentCredential("TOKEN", c.config.Token)
+	if token == "" {
 		if _, err := c.ensureLoggedIn(ctx, port, "unauthorized"); err != nil {
 			return err
 		}
+		token = c.config.Token
 	}
 	redirectURL := fmt.Sprintf("http://localhost:%d", port)
-	checkoutURL, err := buildCheckoutURL(c.apiBase(), redirectURL, c.config.Token, c.config.SpaceID)
+	checkoutURL, err := buildCheckoutURL(c.apiBase(), redirectURL, token, environmentCredential("SPACE_ID", c.config.SpaceID))
 	if err != nil {
 		return err
 	}
@@ -1065,7 +1065,7 @@ func (c *appContext) runTask(args []string) error {
 			return err
 		}
 		if len(rest) != 0 {
-			return fmt.Errorf("usage: deckops task list [--type <type>] [--limit <n>] [--offset <n>]")
+			return fmt.Errorf("usage: decktools task list [--type <type>] [--limit <n>] [--offset <n>]")
 		}
 		client, err := c.getClient(context.Background())
 		if err != nil {
@@ -1079,8 +1079,8 @@ func (c *appContext) runTask(args []string) error {
 		if err != nil {
 			return err
 		}
-		result, err := client.Tasks.List(context.Background(), deckops.ListTasksParams{
-			SpaceID: c.config.SpaceID, Type: deckops.TaskType(opts.first("type")), StartIndex: offset, MaxResults: limit, HasStart: true, HasMax: true,
+		result, err := client.Tasks.List(context.Background(), decktools.ListTasksParams{
+			SpaceID: c.config.SpaceID, Type: decktools.TaskType(opts.first("type")), StartIndex: offset, MaxResults: limit, HasStart: true, HasMax: true,
 		})
 		if err != nil {
 			return err
@@ -1101,7 +1101,7 @@ func (c *appContext) runTask(args []string) error {
 			return err
 		}
 		if len(rest) != 1 {
-			return fmt.Errorf("usage: deckops task get <task-id> [-o <path>]")
+			return fmt.Errorf("usage: decktools task get <task-id> [-o <path>]")
 		}
 		client, err := c.getClient(context.Background())
 		if err != nil {
@@ -1124,7 +1124,7 @@ func (c *appContext) runTask(args []string) error {
 		c.output(task, func() string { return formatTaskDetails(task) })
 	case "delete":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: deckops task delete <task-id>")
+			return fmt.Errorf("usage: decktools task delete <task-id>")
 		}
 		client, err := c.getClient(context.Background())
 		if err != nil {
@@ -1147,7 +1147,7 @@ func (c *appContext) runCompress(args []string) error {
 		return err
 	}
 	if len(rest) != 1 {
-		return fmt.Errorf("usage: deckops compress <input-file> [options]")
+		return fmt.Errorf("usage: decktools compress <input-file> [options]")
 	}
 	input := rest[0]
 	ext := strings.ToLower(filepath.Ext(input))
@@ -1168,7 +1168,7 @@ func (c *appContext) runExtract(args []string) error {
 		return err
 	}
 	if len(rest) != 1 {
-		return fmt.Errorf("usage: deckops extract <input-file> [--type <type>] [options]")
+		return fmt.Errorf("usage: decktools extract <input-file> [--type <type>] [options]")
 	}
 	input := rest[0]
 	ext := strings.ToLower(filepath.Ext(input))
@@ -1197,7 +1197,7 @@ func (c *appContext) runOCR(args []string) error {
 		return err
 	}
 	if len(rest) != 1 {
-		return fmt.Errorf("usage: deckops ocr <input-file> [--language <lang>] [options]")
+		return fmt.Errorf("usage: decktools ocr <input-file> [--language <lang>] [options]")
 	}
 	lang := opts.first("language")
 	if !contains(ocrLanguages, lang) {
@@ -1226,7 +1226,7 @@ func (c *appContext) runConvert(args []string) error {
 		return err
 	}
 	if len(rest) == 0 {
-		return fmt.Errorf("usage: deckops convert <input-files...> --to <format> [options]")
+		return fmt.Errorf("usage: decktools convert <input-files...> --to <format> [options]")
 	}
 	formatMap := renderFormats[opts.first("to")]
 	if formatMap == nil {
@@ -1380,7 +1380,7 @@ func (c *appContext) runTranslate(args []string) error {
 		return err
 	}
 	if len(rest) != 1 {
-		return fmt.Errorf("usage: deckops translate <input-file> --from <language> --to <language> --model <model> [options]")
+		return fmt.Errorf("usage: decktools translate <input-file> --from <language> --to <language> --model <model> [options]")
 	}
 	if !contains(sourceLanguages, opts.first("from")) {
 		return fmt.Errorf("Unsupported source language: %s\nSupported: %s", opts.first("from"), strings.Join(sourceLanguages, ", "))
@@ -1425,7 +1425,7 @@ func (c *appContext) runExplicitTask(args []string) error {
 		return err
 	}
 	if len(rest) < 2 {
-		return fmt.Errorf("usage: deckops run <task-type> <input-files...> [--param <key=value>] [options]")
+		return fmt.Errorf("usage: decktools run <task-type> <input-files...> [--param <key=value>] [options]")
 	}
 	taskType := rest[0]
 	inputFiles := rest[1:]
@@ -1482,7 +1482,7 @@ func (c *appContext) runFileTask(options fileTaskOptions) error {
 		} else {
 			c.info("Uploading " + base + "...")
 		}
-		result, err := client.Files.Upload(context.Background(), deckops.UploadInput{Path: input}, deckops.UploadOptions{
+		result, err := client.Files.Upload(context.Background(), decktools.UploadInput{Path: input}, decktools.UploadOptions{
 			OnProgress: func(progress float64) {
 				if !c.json && progress >= 1 {
 					fmt.Println("Uploaded " + base)
@@ -1495,9 +1495,9 @@ func (c *appContext) runFileTask(options fileTaskOptions) error {
 		fileIDs = append(fileIDs, result.ID)
 	}
 	c.info(options.createMessage)
-	task, err := client.Tasks.Create(context.Background(), deckops.CreateTaskParams{
+	task, err := client.Tasks.Create(context.Background(), decktools.CreateTaskParams{
 		FileIDs: fileIDs,
-		Type:    deckops.TaskType(options.taskType),
+		Type:    decktools.TaskType(options.taskType),
 		Name:    options.taskName,
 		Params:  options.params,
 	})
@@ -1509,7 +1509,7 @@ func (c *appContext) runFileTask(options fileTaskOptions) error {
 	// and waits for an explicit start signal before executing.
 	// If Create triggered a 401 → login → retry, config.Token is now set
 	// and we skip the start call (authenticated tasks auto-start).
-	if c.config.Token == "" {
+	if environmentCredential("TOKEN", c.config.Token) == "" {
 		if _, err := client.Tasks.Start(context.Background(), task.ID); err != nil {
 			return err
 		}
@@ -1522,10 +1522,10 @@ func (c *appContext) runFileTask(options fileTaskOptions) error {
 			return err
 		}
 		c.info(options.waitMessage)
-		task, err = client.Tasks.Wait(context.Background(), task.ID, deckops.WaitForTaskOptions{
+		task, err = client.Tasks.Wait(context.Background(), task.ID, decktools.WaitForTaskOptions{
 			Timeout: time.Duration(timeoutSec) * time.Second,
-			OnProgress: func(t deckops.Task) {
-				if !c.json && t.Status == deckops.TaskStatusRunning {
+			OnProgress: func(t decktools.Task) {
+				if !c.json && t.Status == decktools.TaskStatusRunning {
 					fmt.Println(options.waitMessage)
 				}
 			},
@@ -1533,7 +1533,7 @@ func (c *appContext) runFileTask(options fileTaskOptions) error {
 		if err != nil {
 			return err
 		}
-		if task.Status == deckops.TaskStatusCompleted {
+		if task.Status == decktools.TaskStatusCompleted {
 			c.info(options.doneMessage)
 		} else {
 			c.info(options.failMessage)
@@ -1758,7 +1758,7 @@ func normalizeTranslationModel(value string) (string, error) {
 	}
 }
 
-func formatTaskDetails(task *deckops.Task) string {
+func formatTaskDetails(task *decktools.Task) string {
 	lines := []string{
 		"Task Details:",
 		"  ID: " + task.ID,
@@ -1784,8 +1784,8 @@ type outputWriteResult struct {
 	Files []string `json:"files,omitempty"`
 }
 
-func (c *appContext) tryWriteTaskOutput(ctx context.Context, client *deckops.Client, task *deckops.Task, outPath string) (outputWriteResult, bool) {
-	if task.Status != deckops.TaskStatusCompleted {
+func (c *appContext) tryWriteTaskOutput(ctx context.Context, client *decktools.Client, task *decktools.Task, outPath string) (outputWriteResult, bool) {
+	if task.Status != decktools.TaskStatusCompleted {
 		return outputWriteResult{}, false
 	}
 	var lastErr error
@@ -1796,7 +1796,7 @@ func (c *appContext) tryWriteTaskOutput(ctx context.Context, client *deckops.Cli
 		}
 		lastErr = err
 		// Only retry transient network/upstream failures — never 403/4xx business errors.
-		if attempt < 3 && deckops.IsRetriableError(err) {
+		if attempt < 3 && decktools.IsRetriableError(err) {
 			time.Sleep(10 * time.Second)
 			continue
 		}
@@ -1815,21 +1815,21 @@ func (c *appContext) tryWriteTaskOutput(ctx context.Context, client *deckops.Cli
 
 // attachDownloadResult loads task result from GET /tools/tasks/:id/download.
 // Task detail/SSE only carries status/progress metadata now.
-func (c *appContext) attachDownloadResult(ctx context.Context, client *deckops.Client, task *deckops.Task) (*deckops.Task, error) {
-	if task.Status != deckops.TaskStatusCompleted {
+func (c *appContext) attachDownloadResult(ctx context.Context, client *decktools.Client, task *decktools.Task) (*decktools.Task, error) {
+	if task.Status != decktools.TaskStatusCompleted {
 		return task, nil
 	}
 	var result any
-	if err := client.Tasks.Down(ctx, task.ID, deckops.TaskDownloadOptions{}, &result); err != nil {
+	if err := client.Tasks.Down(ctx, task.ID, decktools.TaskDownloadOptions{}, &result); err != nil {
 		return nil, err
 	}
 	task.Result = result
 	return task, nil
 }
 
-func (c *appContext) writeTaskOutput(ctx context.Context, client *deckops.Client, task *deckops.Task, outPath string) (outputWriteResult, error) {
+func (c *appContext) writeTaskOutput(ctx context.Context, client *decktools.Client, task *decktools.Task, outPath string) (outputWriteResult, error) {
 	var downloadResult any
-	if err := client.Tasks.Down(ctx, task.ID, deckops.TaskDownloadOptions{}, &downloadResult); err != nil {
+	if err := client.Tasks.Down(ctx, task.ID, decktools.TaskDownloadOptions{}, &downloadResult); err != nil {
 		return outputWriteResult{}, err
 	}
 	files := collectOutputFiles(downloadResult)

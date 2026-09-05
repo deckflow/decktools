@@ -28,7 +28,7 @@ def generate_auth_uuid() -> str:
 
 
 def _config_dir() -> Path:
-    for key in ("DECKFLOW_CONFIG_DIR", "DECKHTML_CONFIG_DIR", "DECKOPS_CONFIG_DIR"):
+    for key in ("DECKFLOW_CONFIG_DIR",):
         configured = os.getenv(key)
         if configured:
             return Path(configured).expanduser()
@@ -63,7 +63,7 @@ def resolve_auth_uuid(
     if is_valid_auth_uuid(auth_uuid):
         return auth_uuid
 
-    env_value = os.getenv("DECKOPS_AUTH_UUID")
+    env_value = os.getenv("DECKTOOLS_AUTH_UUID")
     if is_valid_auth_uuid(env_value):
         return env_value
 

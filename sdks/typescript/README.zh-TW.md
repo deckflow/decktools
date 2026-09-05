@@ -1,25 +1,25 @@
 **語言：** [English](README.md) | [简体中文](README.zh-CN.md) | **繁體中文** | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @deckops/sdk
+# @decktools/sdk
 
-用於 Deckops/Deckflow 任務 API 的 TypeScript SDK，相容 Node.js 與瀏覽器。
+用於 DeckTools/Deckflow 任務 API 的 TypeScript SDK，相容 Node.js 與瀏覽器。
 
 ## 安裝
 
 ```bash
-pnpm add @deckops/sdk
+pnpm add @decktools/sdk
 ```
 
 在本 monorepo 中：
 
 ```bash
-pnpm --filter @deckops/sdk build
+pnpm --filter @decktools/sdk build
 ```
 
 ## 建立客戶端
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -40,11 +40,11 @@ const deck = createDeck({
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - 401 後呼叫一次，然後重試請求。
 - `onPaymentRequired?: () => Promise<void>` - 402 後呼叫一次，然後重試請求。
 
-每個 Deckops API 請求會自動包含 `X-Auth-UUID`，即用於跨工作階段追蹤客戶端的穩定 UUID v4。
+每個 DeckTools API 請求會自動包含 `X-Auth-UUID`，即用於跨工作階段追蹤客戶端的穩定 UUID v4。
 
 - **瀏覽器**：持久化在 `localStorage` 的 `df_uuid` 鍵下。
 - **Node.js**：持久化在 `~/.deckflow/auth-uuid`（可透過 `DECKFLOW_CONFIG_DIR` 覆寫目錄）。
-- **顯式覆寫**：傳入 `authUuid` 或設定 `DECKOPS_AUTH_UUID`（僅 Node）用於 CI、容器或多租戶伺服器的固定 ID。
+- **顯式覆寫**：傳入 `authUuid` 或設定 `DECKTOOLS_AUTH_UUID`（僅 Node）用於 CI、容器或多租戶伺服器的固定 ID。
 
 ```ts
 const uuid = await deck.getAuthUuid();

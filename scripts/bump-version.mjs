@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const PACKAGES = [
-  { path: 'sdks/typescript/package.json', name: '@deckops/sdk' },
-  { path: 'apps/node-cli/package.json', name: 'deckops' },
+  { path: 'sdks/typescript/package.json', name: '@decktools/sdk' },
+  { path: 'apps/node-cli/package.json', name: 'decktools' },
 ];
 
 const bumpType = process.argv[2] ?? 'patch';

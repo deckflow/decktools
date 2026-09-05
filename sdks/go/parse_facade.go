@@ -1,4 +1,4 @@
-package deckops
+package decktools
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 // input, translates Output into the backend's markdown switches, and sorts the
 // response into Markdown fields plus the raw payload.
 //
-//	res, err := deck.Parse(ctx, deckops.ParseSource{File: &upload}, deckops.ParseOptions{})
+//	res, err := deck.Parse(ctx, decktools.ParseSource{File: &upload}, decktools.ParseOptions{})
 //	res.Markdown
 //
-//	res, err := deck.Parse(ctx, src, deckops.ParseOptions{Output: deckops.ParseOutputIR})
+//	res, err := deck.Parse(ctx, src, decktools.ParseOptions{Output: decktools.ParseOutputIR})
 //	json.Unmarshal(res.Result, &document)
 func (c *Client) Parse(ctx context.Context, source ParseSource, options ParseOptions) (*ParseResult, error) {
 	output := options.Output

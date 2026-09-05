@@ -9,7 +9,7 @@ import { createDeck, DEFAULT_ROOT, isValidAuthUuid, APIError } from '../../src/i
 const TEST_AUTH_UUID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-describe('@deckops/sdk', () => {
+describe('@decktools/sdk', () => {
   let mock: MockAdapter;
 
   beforeEach(() => {

@@ -68,7 +68,7 @@ describe('CLI E2E Tests', () => {
       const result = await runCLI(['--help']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Deckflow CLI');
+      expect(result.stdout).toContain('DeckTools CLI');
       expect(result.stdout).toContain('Commands:');
       expect(result.stdout).toContain('config');
       expect(result.stdout).toContain('compress');

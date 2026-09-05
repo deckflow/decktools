@@ -7,8 +7,8 @@ from typing import Any
 import httpx
 import pytest
 
-from deckops import DEFAULT_ROOT, APIError, create_deck
-from deckops import http_client as http_client_module
+from decktools import DEFAULT_ROOT, APIError, create_deck
+from decktools import http_client as http_client_module
 
 TEST_UUID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 

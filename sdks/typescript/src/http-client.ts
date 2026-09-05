@@ -9,8 +9,8 @@ type RetriableConfig = Record<string, unknown> & {
   url?: string;
   params?: Record<string, unknown>;
   data?: unknown;
-  __deckopsCheckoutRetried?: boolean;
-  __deckopsAuthRetried?: boolean;
+  __decktoolsCheckoutRetried?: boolean;
+  __decktoolsAuthRetried?: boolean;
   signal?: AbortSignal;
 };
 
@@ -114,17 +114,17 @@ export class HttpClient {
         const cfg = error.config as RetriableConfig | undefined;
         throwIfAborted(cfg?.signal);
 
-        if (status === 402 && cfg && !cfg.__deckopsCheckoutRetried) {
+        if (status === 402 && cfg && !cfg.__decktoolsCheckoutRetried) {
           if (options.onPaymentRequired) {
-            cfg.__deckopsCheckoutRetried = true;
+            cfg.__decktoolsCheckoutRetried = true;
             await withSignal(options.onPaymentRequired(), cfg.signal);
             return await this.client.request(cfg);
           }
           throw APIError.paymentRequired(error);
         }
 
-        if (status === 401 && cfg && !cfg.__deckopsAuthRetried) {
-          cfg.__deckopsAuthRetried = true;
+        if (status === 401 && cfg && !cfg.__decktoolsAuthRetried) {
+          cfg.__decktoolsAuthRetried = true;
           const oldSpaceId = this.spaceIdFromConfig(cfg) ?? this.spaceId;
 
           if (this.onUnauthorized && this.token && !this.isApiKeyAuth()) {

@@ -103,7 +103,7 @@ export function registerConfigCommands(program: Command, ctx: Context): void {
             .map(([key, value]) => `${chalk.cyan(key)}: ${value || chalk.gray('(not set)')}`)
             .join('\n');
           if (shouldShowLoginHint) {
-            return `${content}\n${chalk.yellow('Tip: credentials missing. Please run `deckops login` or set an API key first.')}`;
+            return `${content}\n${chalk.yellow('Tip: credentials missing. Please run `decktools login` or set an API key first.')}`;
           }
           return content;
         });

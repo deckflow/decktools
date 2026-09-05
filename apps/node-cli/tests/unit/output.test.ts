@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import type { DeckTask } from '@deckops/sdk';
+import type { DeckTask } from '@decktools/sdk';
 import { writeTaskOutput } from '../../src/utils/output.js';
 
 describe('writeTaskOutput', () => {
@@ -10,7 +10,7 @@ describe('writeTaskOutput', () => {
   const baseUrl = 'https://download.test';
 
   beforeAll(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deckops-output-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'decktools-output-'));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string | URL | Request) => {

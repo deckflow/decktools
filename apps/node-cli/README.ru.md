@@ -1,8 +1,8 @@
 **Языки:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | **Русский** | [日本語](README.ja.md)
 
-# deckops CLI
+# decktools CLI
 
-Deckops — это инструмент командной строки для [Deckflow](https://app.deckflow.com). Он позволяет загружать файлы, создавать асинхронные задачи и просматривать статус задач.
+DeckTools — это инструмент командной строки для [Deckflow](https://app.deckflow.com). Он позволяет загружать файлы, создавать асинхронные задачи и просматривать статус задач.
 
 ## Требования
 
@@ -12,16 +12,16 @@ Deckops — это инструмент командной строки для [
 ## Установка
 
 ```bash
-npm install -g deckops
-deckops --help
+npm install -g decktools
+decktools --help
 ```
 
 ## Быстрый старт
 
-Deckops проведет вас через аутентификацию и настройку рабочего пространства, когда это потребуется команде.
+DeckTools проведет вас через аутентификацию и настройку рабочего пространства, когда это потребуется команде.
 
 ```bash
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 ```
 
 ## Глобальные опции
@@ -36,13 +36,13 @@ deckops convert slides.pptx --to pdf
 
 ```bash
 # Список задач в режиме JSON
-deckops --json task list --limit 5
+decktools --json task list --limit 5
 
 # Просмотр версии
-deckops --version
+decktools --version
 
 # Справка по подкоманде
-deckops convert --help
+decktools convert --help
 ```
 
 ## Сжатие файлов
@@ -61,13 +61,13 @@ deckops convert --help
 
 ```bash
 # Сжать презентацию PPT
-deckops compress presentation.pptx
+decktools compress presentation.pptx
 
 # Сжать видео и сохранить результат
-deckops compress demo.mp4 -o ./output/compressed.mp4
+decktools compress demo.mp4 -o ./output/compressed.mp4
 
 # Только создать задачу, не ждать
-deckops compress large.pptx --no-wait
+decktools compress large.pptx --no-wait
 ```
 
 ## Извлечение информации
@@ -85,13 +85,13 @@ deckops compress large.pptx --no-wait
 
 ```bash
 # Автоматически извлечь информацию о шрифтах из pptx
-deckops extract slides.pptx
+decktools extract slides.pptx
 
 # Явно извлечь текстовые фигуры
-deckops extract slides.pptx --type text-shapes
+decktools extract slides.pptx --type text-shapes
 
 # Извлечь и сохранить в каталог
-deckops extract slides.pptx --type fonts -o ./extracted/
+decktools extract slides.pptx --type fonts -o ./extracted/
 ```
 
 ## OCR-распознавание текста
@@ -111,13 +111,13 @@ deckops extract slides.pptx --type fonts -o ./extracted/
 
 ```bash
 # Распознать китайское изображение (язык по умолчанию)
-deckops ocr scan.jpg
+decktools ocr scan.jpg
 
 # Распознать английское изображение
-deckops ocr document.png --language en
+decktools ocr document.png --language en
 
 # Распознать на японском и сохранить
-deckops ocr receipt.jpg --language ja -o ./ocr-result.json
+decktools ocr receipt.jpg --language ja -o ./ocr-result.json
 ```
 
 ## Конвертация формата
@@ -140,13 +140,13 @@ deckops ocr receipt.jpg --language ja -o ./ocr-result.json
 
 ```bash
 # PPT в PDF
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 
 # Объединить несколько HTML в PPTX
-deckops convert page1.html page2.html page3.html --to pptx
+decktools convert page1.html page2.html page3.html --to pptx
 
 # HTML в PNG с размерами и сохранением
-deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
+decktools convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 ```
 
 ## Объединение PPT
@@ -164,13 +164,13 @@ deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 
 ```bash
 # Объединить три презентации
-deckops join intro.pptx body.pptx appendix.pptx
+decktools join intro.pptx body.pptx appendix.pptx
 
 # Указать имя задачи и сохранить
-deckops join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
+decktools join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
 
 # Только создать задачу
-deckops join a.pptx b.pptx --no-wait
+decktools join a.pptx b.pptx --no-wait
 ```
 
 ## Генерация контента с ИИ
@@ -197,13 +197,13 @@ deckops join a.pptx b.pptx --no-wait
 
 ```bash
 # Генерация только из текста
-deckops create --input-text "Напиши план презентации продукта"
+decktools create --input-text "Напиши план презентации продукта"
 
 # Со справочным файлом и ограничением страниц
-deckops create outline.md --input-text "Развернуть в полный текст выступления" --page-count 20
+decktools create outline.md --input-text "Развернуть в полный текст выступления" --page-count 20
 
 # Продвинутая модель + поиск и сохранение результата
-deckops create brief.pdf --input-text "Сгенерировать подробный отчёт" --advanced-model --enable-search -o ./report/
+decktools create brief.pdf --input-text "Сгенерировать подробный отчёт" --advanced-model --enable-search -o ./report/
 ```
 
 ## Перевод документов
@@ -225,13 +225,13 @@ deckops create brief.pdf --input-text "Сгенерировать подробн
 
 ```bash
 # Китайский в английский (модель Standard)
-deckops translate handbook.docx --from zh --to en --model Standard
+decktools translate handbook.docx --from zh --to en --model Standard
 
 # Английский в китайский, модель Pro
-deckops translate slides.pptx --from en --to zh --model Pro
+decktools translate slides.pptx --from en --to zh --model Pro
 
 # Автоопределение исходного языка, глоссарий и сохранение
-deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
+decktools translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
 ```
 
 ## Универсальное выполнение задач
@@ -251,13 +251,13 @@ deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o .
 
 ```bash
 # PPT в PDF (явный тип задачи)
-deckops run convertor.ppt2pdf demo.ppt
+decktools run convertor.ppt2pdf demo.ppt
 
 # Объединить PPT
-deckops run pptx.join part1.pptx part2.pptx
+decktools run pptx.join part1.pptx part2.pptx
 
 # HTML в PPTX с параметрами
-deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
+decktools run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
 ```
 
 ## Управление задачами
@@ -274,13 +274,13 @@ deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param
 
 ```bash
 # Список 10 последних задач
-deckops task list --limit 10
+decktools task list --limit 10
 
 # Только задачи конвертации
-deckops task list --type convertor.ppt2pdf --limit 20
+decktools task list --type convertor.ppt2pdf --limit 20
 
 # Пагинированный запрос в JSON
-deckops --json task list --offset 50 --limit 50
+decktools --json task list --offset 50 --limit 50
 ```
 
 ### `task get <task-id>`
@@ -293,13 +293,13 @@ deckops --json task list --offset 50 --limit 50
 
 ```bash
 # Просмотр деталей задачи
-deckops task get abc123-task-id
+decktools task get abc123-task-id
 
 # Скачать результат в файл
-deckops task get abc123-task-id -o ./result.pdf
+decktools task get abc123-task-id -o ./result.pdf
 
 # Режим JSON
-deckops --json task get abc123-task-id
+decktools --json task get abc123-task-id
 ```
 
 ### `task delete <task-id>`
@@ -308,13 +308,13 @@ deckops --json task get abc123-task-id
 
 ```bash
 # Удалить задачу
-deckops task delete abc123-task-id
+decktools task delete abc123-task-id
 
 # Режим JSON
-deckops --json task delete abc123-task-id
+decktools --json task delete abc123-task-id
 
 # Подтвердить список после удаления
-deckops task delete abc123-task-id && deckops task list --limit 5
+decktools task delete abc123-task-id && decktools task list --limit 5
 ```
 
 ## Интерактивное дополнение
@@ -341,4 +341,4 @@ deckops task delete abc123-task-id && deckops task list --limit 5
 ## Связанные ссылки
 
 - [Deckflow](https://app.deckflow.com)
-- Сообщить о проблеме: [GitHub Issues](https://github.com/deckflow/deckops/issues)
+- Сообщить о проблеме: [GitHub Issues](https://github.com/deckflow/decktools/issues)

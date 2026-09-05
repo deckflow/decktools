@@ -1,8 +1,8 @@
 **Langues :** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | **Français** | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# deckops CLI
+# decktools CLI
 
-Deckops est l'outil en ligne de commande de [Deckflow](https://app.deckflow.com). Il permet de téléverser des fichiers, de créer des tâches asynchrones et de consulter l'état des tâches.
+DeckTools est l'outil en ligne de commande de [Deckflow](https://app.deckflow.com). Il permet de téléverser des fichiers, de créer des tâches asynchrones et de consulter l'état des tâches.
 
 ## Prérequis
 
@@ -12,16 +12,16 @@ Deckops est l'outil en ligne de commande de [Deckflow](https://app.deckflow.com)
 ## Installation
 
 ```bash
-npm install -g deckops
-deckops --help
+npm install -g decktools
+decktools --help
 ```
 
 ## Démarrage rapide
 
-Deckops vous guidera dans l'authentification et la configuration de l'espace de travail lorsqu'une commande en aura besoin.
+DeckTools vous guidera dans l'authentification et la configuration de l'espace de travail lorsqu'une commande en aura besoin.
 
 ```bash
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 ```
 
 ## Options globales
@@ -36,13 +36,13 @@ Exemples :
 
 ```bash
 # Lister les tâches en mode JSON
-deckops --json task list --limit 5
+decktools --json task list --limit 5
 
 # Afficher la version
-deckops --version
+decktools --version
 
 # Afficher l'aide d'une sous-commande
-deckops convert --help
+decktools convert --help
 ```
 
 ## Compression de fichiers
@@ -61,13 +61,13 @@ Formats pris en charge : `.zip`, `.pptx`, `.key`, `.docx`, `.xlsx`, `.mp4`, `.av
 
 ```bash
 # Compresser une présentation PPT
-deckops compress presentation.pptx
+decktools compress presentation.pptx
 
 # Compresser une vidéo et enregistrer le résultat
-deckops compress demo.mp4 -o ./output/compressed.mp4
+decktools compress demo.mp4 -o ./output/compressed.mp4
 
 # Créer la tâche uniquement, sans attendre
-deckops compress large.pptx --no-wait
+decktools compress large.pptx --no-wait
 ```
 
 ## Extraction d'informations
@@ -85,13 +85,13 @@ Extraire les polices, les formes de texte et d'autres informations d'un fichier.
 
 ```bash
 # Extraire automatiquement les infos de polices depuis un pptx
-deckops extract slides.pptx
+decktools extract slides.pptx
 
 # Extraire explicitement les formes de texte
-deckops extract slides.pptx --type text-shapes
+decktools extract slides.pptx --type text-shapes
 
 # Extraire et enregistrer dans un répertoire
-deckops extract slides.pptx --type fonts -o ./extracted/
+decktools extract slides.pptx --type fonts -o ./extracted/
 ```
 
 ## Reconnaissance OCR
@@ -111,13 +111,13 @@ Langues prises en charge : `zh-hans`, `zh-hant`, `en`, `ja`, `ko`, `ar`, `de`, `
 
 ```bash
 # Reconnaître une image en chinois (langue par défaut)
-deckops ocr scan.jpg
+decktools ocr scan.jpg
 
 # Reconnaître une image en anglais
-deckops ocr document.png --language en
+decktools ocr document.png --language en
 
 # Reconnaître en japonais et enregistrer
-deckops ocr receipt.jpg --language ja -o ./ocr-result.json
+decktools ocr receipt.jpg --language ja -o ./ocr-result.json
 ```
 
 ## Conversion de format
@@ -140,13 +140,13 @@ Convertir des fichiers au format spécifié.
 
 ```bash
 # PPT vers PDF
-deckops convert slides.pptx --to pdf
+decktools convert slides.pptx --to pdf
 
 # Fusionner plusieurs HTML en PPTX
-deckops convert page1.html page2.html page3.html --to pptx
+decktools convert page1.html page2.html page3.html --to pptx
 
 # HTML vers PNG avec dimensions et enregistrement
-deckops convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
+decktools convert slide.html --to png --width 1920 --height 1080 -o ./slide.png
 ```
 
 ## Fusion PPT
@@ -164,13 +164,13 @@ Fusionner plusieurs fichiers `.pptx` dans l'ordre donné en un seul (type de tâ
 
 ```bash
 # Fusionner trois présentations
-deckops join intro.pptx body.pptx appendix.pptx
+decktools join intro.pptx body.pptx appendix.pptx
 
 # Spécifier le nom de la tâche et enregistrer
-deckops join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
+decktools join part1.pptx part2.pptx --name merged-deck -o ./merged.pptx
 
 # Créer la tâche uniquement
-deckops join a.pptx b.pptx --no-wait
+decktools join a.pptx b.pptx --no-wait
 ```
 
 ## Génération de contenu IA
@@ -197,13 +197,13 @@ Jusqu'à 2 fichiers de référence pris en charge : `.html`, `.pdf`, `.docx`, `.
 
 ```bash
 # Génération texte pur
-deckops create --input-text "Rédiger un plan de lancement produit"
+decktools create --input-text "Rédiger un plan de lancement produit"
 
 # Avec fichier de référence et limite de pages
-deckops create outline.md --input-text "Développer en discours complet" --page-count 20
+decktools create outline.md --input-text "Développer en discours complet" --page-count 20
 
 # Modèle avancé + recherche, et enregistrer le résultat
-deckops create brief.pdf --input-text "Générer un rapport détaillé" --advanced-model --enable-search -o ./report/
+decktools create brief.pdf --input-text "Générer un rapport détaillé" --advanced-model --enable-search -o ./report/
 ```
 
 ## Traduction de documents
@@ -225,13 +225,13 @@ Traduire des fichiers documentaires. Prend en charge `.docx`, `.pptx`, `.pdf`, `
 
 ```bash
 # Chinois vers anglais (modèle Standard)
-deckops translate handbook.docx --from zh --to en --model Standard
+decktools translate handbook.docx --from zh --to en --model Standard
 
 # Anglais vers chinois, modèle Pro
-deckops translate slides.pptx --from en --to zh --model Pro
+decktools translate slides.pptx --from en --to zh --model Pro
 
 # Détection automatique de la langue source, glossaire et enregistrement
-deckops translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
+decktools translate manual.pdf --from auto --to ja --model Pro --use-glossary -o ./translated.pdf
 ```
 
 ## Exécution générique de tâches
@@ -251,13 +251,13 @@ Exécuter avec un type de tâche explicite. Convient aux usages avancés ou aux 
 
 ```bash
 # PPT vers PDF (type de tâche explicite)
-deckops run convertor.ppt2pdf demo.ppt
+decktools run convertor.ppt2pdf demo.ppt
 
 # Fusionner PPT
-deckops run pptx.join part1.pptx part2.pptx
+decktools run pptx.join part1.pptx part2.pptx
 
 # HTML vers PPTX avec paramètres
-deckops run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
+decktools run convertor.html2pptx page1.html page2.html --param width=1920 --param needEmbedFonts=true
 ```
 
 ## Gestion des tâches
@@ -274,13 +274,13 @@ Lister les tâches du workspace.
 
 ```bash
 # Lister les 10 tâches les plus récentes
-deckops task list --limit 10
+decktools task list --limit 10
 
 # Tâches de conversion uniquement
-deckops task list --type convertor.ppt2pdf --limit 20
+decktools task list --type convertor.ppt2pdf --limit 20
 
 # Requête paginée en JSON
-deckops --json task list --offset 50 --limit 50
+decktools --json task list --offset 50 --limit 50
 ```
 
 ### `task get <task-id>`
@@ -293,13 +293,13 @@ Obtenir les détails d'une tâche.
 
 ```bash
 # Voir les détails de la tâche
-deckops task get abc123-task-id
+decktools task get abc123-task-id
 
 # Télécharger le résultat vers un fichier
-deckops task get abc123-task-id -o ./result.pdf
+decktools task get abc123-task-id -o ./result.pdf
 
 # Mode JSON
-deckops --json task get abc123-task-id
+decktools --json task get abc123-task-id
 ```
 
 ### `task delete <task-id>`
@@ -308,13 +308,13 @@ Supprimer une tâche spécifiée.
 
 ```bash
 # Supprimer la tâche
-deckops task delete abc123-task-id
+decktools task delete abc123-task-id
 
 # Mode JSON
-deckops --json task delete abc123-task-id
+decktools --json task delete abc123-task-id
 
 # Confirmer la liste après suppression
-deckops task delete abc123-task-id && deckops task list --limit 5
+decktools task delete abc123-task-id && decktools task list --limit 5
 ```
 
 ## Complétion interactive
@@ -341,4 +341,4 @@ Seules certaines tâches prennent en charge les sources multiples ordonnées : `
 ## Liens connexes
 
 - [Deckflow](https://app.deckflow.com)
-- Signaler un problème : [GitHub Issues](https://github.com/deckflow/deckops/issues)
+- Signaler un problème : [GitHub Issues](https://github.com/deckflow/decktools/issues)

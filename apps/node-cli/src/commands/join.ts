@@ -27,7 +27,7 @@ export function registerJoinCommand(program: Command, ctx: Context): void {
       'after',
       `
 Example:
-  $ deckops join intro.pptx body.pptx appendix.pptx
+  $ decktools join intro.pptx body.pptx appendix.pptx
 
 Files are merged into one task in the order provided.`
     )

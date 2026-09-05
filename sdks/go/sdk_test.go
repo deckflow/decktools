@@ -1,4 +1,4 @@
-package deckops
+package decktools
 
 import (
 	"bytes"
@@ -686,24 +686,24 @@ func TestAuthUUIDStorage(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	oldConfigDir := os.Getenv("DECKOPS_CONFIG_DIR")
-	oldAuthUUID := os.Getenv("DECKOPS_AUTH_UUID")
-	tempDir, err := os.MkdirTemp("", "deckops-go-sdk-test-*")
+	oldConfigDir := os.Getenv("DECKTOOLS_CONFIG_DIR")
+	oldAuthUUID := os.Getenv("DECKTOOLS_AUTH_UUID")
+	tempDir, err := os.MkdirTemp("", "decktools-go-sdk-test-*")
 	if err != nil {
 		panic(err)
 	}
-	_ = os.Setenv("DECKOPS_CONFIG_DIR", tempDir)
-	_ = os.Unsetenv("DECKOPS_AUTH_UUID")
+	_ = os.Setenv("DECKTOOLS_CONFIG_DIR", tempDir)
+	_ = os.Unsetenv("DECKTOOLS_AUTH_UUID")
 	code := m.Run()
 	if oldConfigDir == "" {
-		_ = os.Unsetenv("DECKOPS_CONFIG_DIR")
+		_ = os.Unsetenv("DECKTOOLS_CONFIG_DIR")
 	} else {
-		_ = os.Setenv("DECKOPS_CONFIG_DIR", oldConfigDir)
+		_ = os.Setenv("DECKTOOLS_CONFIG_DIR", oldConfigDir)
 	}
 	if oldAuthUUID == "" {
-		_ = os.Unsetenv("DECKOPS_AUTH_UUID")
+		_ = os.Unsetenv("DECKTOOLS_AUTH_UUID")
 	} else {
-		_ = os.Setenv("DECKOPS_AUTH_UUID", oldAuthUUID)
+		_ = os.Setenv("DECKTOOLS_AUTH_UUID", oldAuthUUID)
 	}
 	_ = os.RemoveAll(tempDir)
 	os.Exit(code)

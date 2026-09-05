@@ -23,7 +23,7 @@ export function registerLoginCommand(program: Command, ctx: Context): void {
 
         if (!ctx.jsonOutput) {
           console.log(chalk.green('\n✓ Token saved successfully!\n'));
-          console.log('You can now use Deckflow CLI commands.\n');
+          console.log('You can now use DeckTools CLI commands.\n');
         }
 
         ctx.output(

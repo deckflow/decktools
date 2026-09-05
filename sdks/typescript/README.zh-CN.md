@@ -1,25 +1,25 @@
 **语言：** [English](README.md) | **简体中文** | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @deckops/sdk
+# @decktools/sdk
 
-用于 Deckops/Deckflow 任务 API 的 TypeScript SDK，兼容 Node.js 和浏览器。
+用于 DeckTools/Deckflow 任务 API 的 TypeScript SDK，兼容 Node.js 和浏览器。
 
 ## 安装
 
 ```bash
-pnpm add @deckops/sdk
+pnpm add @decktools/sdk
 ```
 
 在本 monorepo 中：
 
 ```bash
-pnpm --filter @deckops/sdk build
+pnpm --filter @decktools/sdk build
 ```
 
 ## 创建客户端
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -40,11 +40,11 @@ const deck = createDeck({
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - 401 后调用一次，然后重试请求。
 - `onPaymentRequired?: () => Promise<void>` - 402 后调用一次，然后重试请求。
 
-每个 Deckops API 请求会自动包含 `X-Auth-UUID`，即用于跨会话追踪客户端的稳定 UUID v4。
+每个 DeckTools API 请求会自动包含 `X-Auth-UUID`，即用于跨会话追踪客户端的稳定 UUID v4。
 
 - **浏览器**：持久化在 `localStorage` 的 `df_uuid` 键下。
 - **Node.js**：持久化在 `~/.deckflow/auth-uuid`（可通过 `DECKFLOW_CONFIG_DIR` 覆盖目录）。
-- **显式覆盖**：传入 `authUuid` 或设置 `DECKOPS_AUTH_UUID`（仅 Node）用于 CI、容器或多租户服务器的固定 ID。
+- **显式覆盖**：传入 `authUuid` 或设置 `DECKTOOLS_AUTH_UUID`（仅 Node）用于 CI、容器或多租户服务器的固定 ID。
 
 ```ts
 const uuid = await deck.getAuthUuid();
@@ -282,7 +282,7 @@ await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
 `ir` 是返回体原样透传，用对应任务类型的结果类型标注它：
 
 ```ts
-import type { PdfParseResult, PptxParseResult } from '@deckops/sdk';
+import type { PdfParseResult, PptxParseResult } from '@decktools/sdk';
 
 const report = await deck.parse<PdfParseResult>('./report.pdf');
 report.ir.document.elements;

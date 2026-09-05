@@ -1,4 +1,4 @@
-package deckops
+package decktools
 
 import (
 	"encoding/json"

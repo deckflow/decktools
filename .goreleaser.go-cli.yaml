@@ -1,12 +1,12 @@
 version: 2
 
-project_name: deckops
+project_name: decktools
 
 builds:
-  - id: deckops
+  - id: decktools
     dir: apps/go-cli
     main: .
-    binary: deckops
+    binary: decktools
     env:
       - CGO_ENABLED=0
     goos:
@@ -45,7 +45,7 @@ changelog:
 release:
   github:
     owner: deckflow
-    name: deckops
+    name: decktools
   name_template: "go-cli v{{ .Env.RELEASE_VERSION }}"
   extra_files:
-    - glob: ./scripts/deckops-installer.sh
+    - glob: ./scripts/decktools-installer.sh

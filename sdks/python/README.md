@@ -1,12 +1,12 @@
-# deckops-sdk
+# decktools-sdk
 
-Python SDK for Deckops/Deckflow task APIs. It mirrors the TypeScript SDK's task,
+Python SDK for DeckTools/Deckflow task APIs. It mirrors the TypeScript SDK's task,
 upload, SSE wait, and parse behavior.
 
 ## Install
 
 ```bash
-pip install deckops-sdk
+pip install decktools-sdk
 ```
 
 For local development:
@@ -19,18 +19,18 @@ pip install -e ".[dev]"
 
 ```python
 import os
-from deckops import create_deck
+from decktools import create_deck
 
 deck = create_deck(
-    token=os.getenv("DECKOPS_TOKEN"),
-    api_key=os.getenv("DECKOPS_API_KEY"),
-    space_id=os.getenv("DECKOPS_SPACE_ID"),
+    token=os.getenv("DECKTOOLS_TOKEN"),
+    api_key=os.getenv("DECKTOOLS_API_KEY"),
+    space_id=os.getenv("DECKTOOLS_SPACE_ID"),
 )
 ```
 
 Every API request includes a stable UUID v4 in `X-Auth-UUID`. By default it is
 stored in `~/.deckflow/auth-uuid`. Set `DECKFLOW_CONFIG_DIR` to change the directory
-or `DECKOPS_AUTH_UUID` to use a fixed value.
+or `DECKTOOLS_AUTH_UUID` to use a fixed value.
 
 ## Create and wait for tasks
 
@@ -125,4 +125,3 @@ markdown 参数而不是报错，所以 `parse()` 会抛 `RuntimeError`，而不
 The client is synchronous and owns its HTTP connection pool. Use
 `with create_deck(...) as deck:` or call `deck.close()` when the client has a
 short lifetime.
-

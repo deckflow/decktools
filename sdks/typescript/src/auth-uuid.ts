@@ -65,8 +65,6 @@ async function getNodeConfigDir(): Promise<string> {
   const path = await import('node:path');
   return (
     process.env.DECKFLOW_CONFIG_DIR ||
-    process.env.DECKHTML_CONFIG_DIR ||
-    process.env.DECKOPS_CONFIG_DIR ||
     path.join(os.homedir(), '.deckflow')
   );
 }
@@ -156,8 +154,8 @@ export async function resolveAuthUuid(options: CreateDeckOptions = {}): Promise<
     return options.authUuid;
   }
 
-  if (isNode() && isValidAuthUuid(process.env.DECKOPS_AUTH_UUID)) {
-    return process.env.DECKOPS_AUTH_UUID;
+  if (isNode() && isValidAuthUuid(process.env.DECKTOOLS_AUTH_UUID)) {
+    return process.env.DECKTOOLS_AUTH_UUID;
   }
 
   if (options.authUuidStorage) {

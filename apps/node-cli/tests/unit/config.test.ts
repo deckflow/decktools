@@ -2,7 +2,7 @@
  * Unit tests for Config module
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -20,6 +20,7 @@ describe('Config', () => {
   });
 
   afterEach(async () => {
+    vi.unstubAllEnvs();
     // Clean up temporary directory
     await fs.rm(tempDir, { recursive: true, force: true });
   });
@@ -119,5 +120,34 @@ describe('Config', () => {
     expect(config.isConfigured()).toBe(false);
     await config.setApiKey('key-1');
     expect(config.isConfigured()).toBe(true);
+  });
+
+  it('keeps product settings separate from shared identity and ignores the old namespace', async () => {
+    const product = path.join(tempDir, 'product');
+    vi.stubEnv('DECKFLOW_CONFIG_DIR', tempDir);
+    vi.stubEnv('DECKTOOLS_CONFIG_DIR', product);
+    vi.stubEnv('DECKOPS_CONFIG_DIR', path.join(tempDir, 'old'));
+    vi.stubEnv('DECKOPS_TOKEN', 'must-not-read');
+    vi.stubEnv('DECKTOOLS_TOKEN', ''); vi.stubEnv('DECKFLOW_TOKEN', '');
+    const migrated = new Config(); await migrated.load();
+    expect(migrated.configFilePath).toBe(path.join(tempDir, 'credentials'));
+    expect(migrated.token).toBeUndefined();
+    await migrated.set('webhook', 'https://example.test/tools');
+    const next = new Config(); await next.load();
+    expect(next.webhook).toBe('https://example.test/tools');
+    expect(JSON.parse(await fs.readFile(path.join(product, 'config.json'), 'utf8'))).toEqual({ webhook: 'https://example.test/tools' });
+    expect(JSON.parse(await fs.readFile(path.join(tempDir, 'credentials'), 'utf8')).webhook).toBeUndefined();
+    vi.stubEnv('DECKFLOW_TOKEN', 'shared-env'); vi.stubEnv('DECKTOOLS_TOKEN', 'tools-env');
+    expect(next.token).toBe('tools-env');
+    await next.setSpaceId('new-space');
+    expect(JSON.parse(await fs.readFile(path.join(tempDir, 'credentials'), 'utf8')).token).toBeUndefined();
+  });
+
+  it('preserves unknown shared credential fields when updating authentication', async () => {
+    await fs.writeFile(path.join(tempDir, 'credentials'), JSON.stringify({ custom: { untouched: true } }));
+    await config.setToken('updated');
+    const raw = JSON.parse(await fs.readFile(path.join(tempDir, 'credentials'), 'utf8'));
+    expect(raw.custom).toEqual({ untouched: true });
+    expect((await fs.stat(path.join(tempDir, 'credentials'))).mode & 0o777).toBe(0o600);
   });
 });

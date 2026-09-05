@@ -1,14 +1,14 @@
 **Languages:** English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# Deckops
+# DeckTools
 
-Deckops is a pnpm monorepo for Deckflow task automation.
+DeckTools is a pnpm monorepo for Deckflow task automation.
 
 ## Packages
 
-- `sdks/typescript` - `@deckops/sdk`, a TypeScript SDK for file upload and task APIs in Node.js and browsers.
+- `sdks/typescript` - `@decktools/sdk`, a TypeScript SDK for file upload and task APIs in Node.js and browsers.
 - `sdks/go` - Go SDK for file upload and task APIs.
-- `apps/node-cli` - `deckops`, the Node.js CLI. See [apps/node-cli/README.md](apps/node-cli/README.md) for usage.
+- `apps/node-cli` - `decktools`, the Node.js CLI. See [apps/node-cli/README.md](apps/node-cli/README.md) for usage.
 
 ## Install and Build
 
@@ -26,30 +26,30 @@ See [apps/node-cli/README.md](apps/node-cli/README.md) for full CLI documentatio
 Build and run locally:
 
 ```bash
-pnpm --filter deckops build
+pnpm --filter decktools build
 node apps/node-cli/dist/cli.js --help
 ```
 
 Quick start:
 
 ```bash
-deckops login
-deckops config show
-deckops convert slides.pptx --to pdf
+decktools login
+decktools config show
+decktools convert slides.pptx --to pdf
 ```
 
 ## SDK
 
-See [sdks/typescript/README.md](sdks/typescript/README.md) for the `@deckops/sdk` API, and [sdks/go/README.md](sdks/go/README.md) for the Go SDK.
+See [sdks/typescript/README.md](sdks/typescript/README.md) for the `@decktools/sdk` API, and [sdks/go/README.md](sdks/go/README.md) for the Go SDK.
 
 Basic example:
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
-  token: process.env.DECKOPS_TOKEN,
-  spaceId: process.env.DECKOPS_SPACE_ID,
+  token: process.env.DECKTOOLS_TOKEN,
+  spaceId: process.env.DECKTOOLS_SPACE_ID,
 });
 
 const task = await deck.convertPptToPdf({

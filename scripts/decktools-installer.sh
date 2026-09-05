@@ -1,33 +1,33 @@
 #!/bin/sh
 # shellcheck shell=dash
-# Install the deckops Go CLI from GitHub Releases.
+# Install the decktools Go CLI from GitHub Releases.
 #
 # Usage (macOS / Linux):
 #   curl --proto '=https' --tlsv1.2 -LsSf \
-#     https://github.com/deckflow/deckops/releases/latest/download/deckops-installer.sh | sh
+#     https://github.com/deckflow/decktools/releases/latest/download/decktools-installer.sh | sh
 #
 # Optional environment variables:
-#   DECKOPS_VERSION       Pin a version (e.g. 0.7.3). Default: latest go-cli release.
-#   DECKOPS_INSTALL_DIR   Install directory for the binary. Default: $HOME/.local/bin
-#   DECKOPS_NO_MODIFY_PATH  Set to 1 to skip PATH hints / shell profile updates.
-#   DECKOPS_PRINT_VERBOSE Set to 1 for verbose logs.
-#   DECKOPS_GITHUB_TOKEN  Optional token for higher GitHub API rate limits / private fetches.
+#   DECKTOOLS_VERSION       Pin a version (e.g. 0.7.3). Default: latest go-cli release.
+#   DECKTOOLS_INSTALL_DIR   Install directory for the binary. Default: $HOME/.local/bin
+#   DECKTOOLS_NO_MODIFY_PATH  Set to 1 to skip PATH hints / shell profile updates.
+#   DECKTOOLS_PRINT_VERBOSE Set to 1 for verbose logs.
+#   DECKTOOLS_GITHUB_TOKEN  Optional token for higher GitHub API rate limits / private fetches.
 #
 # Inspired by the deckprobe cargo-dist installer UX:
 #   https://github.com/deckflow/deckprobe
 
 set -u
 
-APP_NAME="deckops"
-REPO="deckflow/deckops"
+APP_NAME="decktools"
+REPO="deckflow/decktools"
 TAG_PREFIX="go-cli/v"
 
-PRINT_VERBOSE="${DECKOPS_PRINT_VERBOSE:-0}"
-NO_MODIFY_PATH="${DECKOPS_NO_MODIFY_PATH:-0}"
-AUTH_TOKEN="${DECKOPS_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
+PRINT_VERBOSE="${DECKTOOLS_PRINT_VERBOSE:-0}"
+NO_MODIFY_PATH="${DECKTOOLS_NO_MODIFY_PATH:-0}"
+AUTH_TOKEN="${DECKTOOLS_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 
-GITHUB_BASE="${DECKOPS_INSTALLER_GITHUB_BASE_URL:-https://github.com}"
-API_BASE="${DECKOPS_INSTALLER_GITHUB_API_BASE_URL:-https://api.github.com}"
+GITHUB_BASE="${DECKTOOLS_INSTALLER_GITHUB_BASE_URL:-https://github.com}"
+API_BASE="${DECKTOOLS_INSTALLER_GITHUB_API_BASE_URL:-https://api.github.com}"
 
 say() {
     printf '%s\n' "$1"
@@ -136,7 +136,7 @@ detect_target() {
 }
 
 resolve_version() {
-    local _version="${DECKOPS_VERSION:-}"
+    local _version="${DECKTOOLS_VERSION:-}"
     local _json
     local _tmp
 
@@ -310,7 +310,7 @@ main() {
     resolve_version
     _version="$RETVAL"
 
-    _install_dir="${DECKOPS_INSTALL_DIR:-${_home}/.local/bin}"
+    _install_dir="${DECKTOOLS_INSTALL_DIR:-${_home}/.local/bin}"
     _artifact="${APP_NAME}_${_version}_${_target}.tar.gz"
     _url="${GITHUB_BASE}/${REPO}/releases/download/${TAG_PREFIX}${_version}/${_artifact}"
     _checksums_url="${GITHUB_BASE}/${REPO}/releases/download/${TAG_PREFIX}${_version}/checksums.txt"

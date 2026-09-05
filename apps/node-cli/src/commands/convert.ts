@@ -66,8 +66,8 @@ export function registerConvertCommand(program: Command, ctx: Context): void {
       'after',
       `
 Examples:
-  $ deckops convert slides.pptx --to pdf
-  $ deckops convert page1.html page2.html --to pptx
+  $ decktools convert slides.pptx --to pdf
+  $ decktools convert page1.html page2.html --to pptx
 
 Multiple input files create one ordered conversion task only for html -> pptx.`
     )

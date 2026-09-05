@@ -35,9 +35,9 @@ export function registerRunCommand(program: Command, ctx: Context): void {
       'after',
       `
 Examples:
-  $ deckops run convertor.ppt2pdf demo.ppt
-  $ deckops run pptx.join part1.pptx part2.pptx
-  $ deckops run convertor.html2pptx page1.html page2.html
+  $ decktools run convertor.ppt2pdf demo.ppt
+  $ decktools run pptx.join part1.pptx part2.pptx
+  $ decktools run convertor.html2pptx page1.html page2.html
 
 Multiple input files are passed as one ordered source set only for: ${MULTI_SOURCE_TASK_TYPES.join(', ')}.`
     )

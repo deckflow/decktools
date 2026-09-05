@@ -1,25 +1,25 @@
 **言語:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | **日本語**
 
-# @deckops/sdk
+# @decktools/sdk
 
-Deckops/Deckflow タスク API 用の TypeScript SDK。Node.js とブラウザに対応します。
+DeckTools/Deckflow タスク API 用の TypeScript SDK。Node.js とブラウザに対応します。
 
 ## インストール
 
 ```bash
-pnpm add @deckops/sdk
+pnpm add @decktools/sdk
 ```
 
 この monorepo 内:
 
 ```bash
-pnpm --filter @deckops/sdk build
+pnpm --filter @decktools/sdk build
 ```
 
 ## クライアントの作成
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -40,11 +40,11 @@ const deck = createDeck({
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - 401 後に一度呼び出され、リクエストが再試行される。
 - `onPaymentRequired?: () => Promise<void>` - 402 後に一度呼び出され、リクエストが再試行される。
 
-すべての Deckops API リクエストには、セッション間でクライアントを追跡するための安定した UUID v4 である `X-Auth-UUID` が自動的に含まれます。
+すべての DeckTools API リクエストには、セッション間でクライアントを追跡するための安定した UUID v4 である `X-Auth-UUID` が自動的に含まれます。
 
 - **ブラウザ**: `localStorage` の `df_uuid` キーに永続化。
 - **Node.js**: `~/.deckflow/auth-uuid` に永続化（`DECKFLOW_CONFIG_DIR` でディレクトリを上書き可能）。
-- **明示的な上書き**: CI、コンテナ、マルチテナントサーバーで固定 ID を使う場合は `authUuid` を渡すか `DECKOPS_AUTH_UUID`（Node のみ）を設定。
+- **明示的な上書き**: CI、コンテナ、マルチテナントサーバーで固定 ID を使う場合は `authUuid` を渡すか `DECKTOOLS_AUTH_UUID`（Node のみ）を設定。
 
 ```ts
 const uuid = await deck.getAuthUuid();

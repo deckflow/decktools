@@ -1,4 +1,4 @@
-package deckops
+package decktools
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func resolveAuthUUID(ctx context.Context, options ClientOptions) (string, error)
 	if IsValidAuthUUID(options.AuthUUID) {
 		return options.AuthUUID, nil
 	}
-	if env := os.Getenv("DECKOPS_AUTH_UUID"); IsValidAuthUUID(env) {
+	if env := os.Getenv("DECKTOOLS_AUTH_UUID"); IsValidAuthUUID(env) {
 		return env, nil
 	}
 	if options.AuthUUIDStorage != nil {
@@ -98,7 +98,7 @@ func resolveAuthUUIDWithStorage(ctx context.Context, storage AuthUUIDStorage) (s
 }
 
 func defaultConfigDir() string {
-	for _, key := range []string{"DECKFLOW_CONFIG_DIR", "DECKHTML_CONFIG_DIR", "DECKOPS_CONFIG_DIR"} {
+	for _, key := range []string{"DECKFLOW_CONFIG_DIR"} {
 		if dir := os.Getenv(key); dir != "" {
 			return dir
 		}

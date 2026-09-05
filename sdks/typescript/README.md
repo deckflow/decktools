@@ -1,28 +1,28 @@
 **Languages:** English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @deckops/sdk
+# @decktools/sdk
 
-TypeScript SDK for Deckops/Deckflow task APIs in Node.js and browsers.
+TypeScript SDK for DeckTools/Deckflow task APIs in Node.js and browsers.
 
 ## Install
 
 ```bash
-pnpm add @deckops/sdk
+pnpm add @decktools/sdk
 ```
 
 In this monorepo:
 
 ```bash
-pnpm --filter @deckops/sdk build
+pnpm --filter @decktools/sdk build
 ```
 
 ## Create a Client
 
 Use the root entry point in Node.js. Browser applications should use the dedicated
-`@deckops/sdk/browser` entry point documented below.
+`@decktools/sdk/browser` entry point documented below.
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -52,11 +52,11 @@ const deck = createDeck({ authUuid: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' });
 await deck.generation({ params: { inputText: 'Write a launch plan', pageCount: 8 } });
 ```
 
-Every Deckops API request automatically includes `X-Auth-UUID`, a stable UUID v4 used to track the client across sessions.
+Every DeckTools API request automatically includes `X-Auth-UUID`, a stable UUID v4 used to track the client across sessions.
 
 - **Browser**: persisted in `localStorage` under `df_uuid`.
 - **Node.js**: persisted in `~/.deckflow/auth-uuid` (override the directory with `DECKFLOW_CONFIG_DIR`).
-- **Explicit override**: pass `authUuid` or set `DECKOPS_AUTH_UUID` (Node only) for fixed IDs in CI, containers, or multi-tenant servers.
+- **Explicit override**: pass `authUuid` or set `DECKTOOLS_AUTH_UUID` (Node only) for fixed IDs in CI, containers, or multi-tenant servers.
 
 ```ts
 const uuid = await deck.getAuthUuid();
@@ -70,7 +70,7 @@ Node file and UUID storage code. It is safe to import during SSR. Local paths ar
 rejected; use `File`, named `Blob`, or named binary data instead.
 
 ```ts
-import { createDeck } from '@deckops/sdk/browser';
+import { createDeck } from '@decktools/sdk/browser';
 
 const deck = createDeck({ root: 'https://api.example.com/v1', token: userAccessToken });
 const controller = new AbortController();
@@ -340,7 +340,7 @@ await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
 type's result:
 
 ```ts
-import type { PdfParseResult, PptxParseResult } from '@deckops/sdk';
+import type { PdfParseResult, PptxParseResult } from '@decktools/sdk';
 
 const report = await deck.parse<PdfParseResult>('./report.pdf');
 report.ir.document.elements;

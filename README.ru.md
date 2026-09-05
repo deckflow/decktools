@@ -1,13 +1,13 @@
 **Языки:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | **Русский** | [日本語](README.ja.md)
 
-# Deckops
+# DeckTools
 
-Deckops — это pnpm monorepo для автоматизации задач Deckflow.
+DeckTools — это pnpm monorepo для автоматизации задач Deckflow.
 
 ## Пакеты
 
-- `sdks/typescript` — `@deckops/sdk`, TypeScript SDK для Node.js и браузера для загрузки файлов и API задач.
-- `apps/node-cli` — `deckops`, CLI для Node.js. См. [apps/node-cli/README.ru.md](apps/node-cli/README.ru.md).
+- `sdks/typescript` — `@decktools/sdk`, TypeScript SDK для Node.js и браузера для загрузки файлов и API задач.
+- `apps/node-cli` — `decktools`, CLI для Node.js. См. [apps/node-cli/README.ru.md](apps/node-cli/README.ru.md).
 
 ## Установка и сборка
 
@@ -25,30 +25,30 @@ pnpm test
 Сборка и локальный запуск:
 
 ```bash
-pnpm --filter deckops build
+pnpm --filter decktools build
 node apps/node-cli/dist/cli.js --help
 ```
 
 Быстрый старт:
 
 ```bash
-deckops login
-deckops config show
-deckops convert slides.pptx --to pdf
+decktools login
+decktools config show
+decktools convert slides.pptx --to pdf
 ```
 
 ## SDK
 
-API `@deckops/sdk` описан в [sdks/typescript/README.ru.md](sdks/typescript/README.ru.md).
+API `@decktools/sdk` описан в [sdks/typescript/README.ru.md](sdks/typescript/README.ru.md).
 
 Базовый пример:
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
-  token: process.env.DECKOPS_TOKEN,
-  spaceId: process.env.DECKOPS_SPACE_ID,
+  token: process.env.DECKTOOLS_TOKEN,
+  spaceId: process.env.DECKTOOLS_SPACE_ID,
 });
 
 const task = await deck.convertPptToPdf({

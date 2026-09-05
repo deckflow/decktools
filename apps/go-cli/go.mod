@@ -1,7 +1,7 @@
-module github.com/deckops/deckops/apps/go-cli
+module github.com/deckflow/decktools/apps/go-cli
 
 go 1.21
 
-require github.com/deckops/deckops/sdks/go v0.0.0
+require github.com/deckflow/decktools/sdks/go v0.0.0
 
-replace github.com/deckops/deckops/sdks/go => ../../sdks/go
+replace github.com/deckflow/decktools/sdks/go => ../../sdks/go

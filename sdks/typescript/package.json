@@ -1,7 +1,7 @@
 {
-  "name": "@deckops/sdk",
-  "version": "0.8.0-next.0",
-  "description": "Deckops TypeScript SDK for Node.js and browsers",
+  "name": "@decktools/sdk",
+  "version": "1.0.0",
+  "description": "DeckTools TypeScript SDK for Node.js and browsers",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -49,11 +49,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/deckflow/deckops.git",
+    "url": "git+ssh://git@github.com/deckflow/decktools.git",
     "directory": "sdks/typescript"
   },
-  "homepage": "https://github.com/deckflow/deckops/tree/master/sdks/typescript#readme",
+  "homepage": "https://github.com/deckflow/decktools/tree/master/sdks/typescript#readme",
   "bugs": {
-    "url": "https://github.com/deckflow/deckops/issues"
+    "url": "https://github.com/deckflow/decktools/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

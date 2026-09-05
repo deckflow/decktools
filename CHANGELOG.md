@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0 migration candidate] - 2026-09-05
+
+- Rename the tool distribution to `decktools`, the TypeScript SDK to `@decktools/sdk`, the Go module to `github.com/deckflow/decktools/sdks/go`, and the Python distribution/import to `decktools-sdk` / `decktools`.
+- Use only the `decktools` binary; no alias or forwarding release. The former DeckParse product is becoming the independent DeckOps.
+- Shared credentials and UUID stay under `DECKFLOW_CONFIG_DIR` (default `~/.deckflow`). Product overrides use `DECKTOOLS_*`, never the old `DECKOPS_*` namespace. Node CLI product preferences live in `~/.deckflow/decktools/config.json` (`DECKTOOLS_CONFIG_DIR`).
+- Keep environment overrides out of saved credentials and preserve other products' shared fields.
+- This is a source candidate, not a published release; see `MIGRATION_STATUS.md` for cutover gates.
+
+## [Previous unreleased work — legacy DeckOps]
+
+The following entries describe the old product and its historical migration instructions, not current configuration precedence.
 
 ### Changed
 

@@ -1,3 +1,3 @@
-module github.com/deckops/deckops/sdks/go
+module github.com/deckflow/decktools/sdks/go
 
 go 1.21

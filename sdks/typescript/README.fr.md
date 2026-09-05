@@ -1,25 +1,25 @@
 **Langues :** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | **Français** | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @deckops/sdk
+# @decktools/sdk
 
-SDK TypeScript compatible Node.js et navigateur pour les API de tâches Deckops/Deckflow.
+SDK TypeScript compatible Node.js et navigateur pour les API de tâches DeckTools/Deckflow.
 
 ## Installation
 
 ```bash
-pnpm add @deckops/sdk
+pnpm add @decktools/sdk
 ```
 
 Dans ce monorepo :
 
 ```bash
-pnpm --filter @deckops/sdk build
+pnpm --filter @decktools/sdk build
 ```
 
 ## Créer un client
 
 ```ts
-import { createDeck } from '@deckops/sdk';
+import { createDeck } from '@decktools/sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -40,11 +40,11 @@ Options :
 - `onUnauthorized?: () => Promise<{ token: string; spaceId?: string } | string>` - appelé une fois après un 401, puis la requête est réessayée.
 - `onPaymentRequired?: () => Promise<void>` - appelé une fois après un 402, puis la requête est réessayée.
 
-Chaque requête API Deckops inclut automatiquement `X-Auth-UUID`, un UUID v4 stable utilisé pour suivre le client entre les sessions.
+Chaque requête API DeckTools inclut automatiquement `X-Auth-UUID`, un UUID v4 stable utilisé pour suivre le client entre les sessions.
 
 - **Navigateur** : persisté dans `localStorage` sous la clé `df_uuid`.
 - **Node.js** : persisté dans `~/.deckflow/auth-uuid` (remplacez le répertoire avec `DECKFLOW_CONFIG_DIR`).
-- **Remplacement explicite** : passez `authUuid` ou définissez `DECKOPS_AUTH_UUID` (Node uniquement) pour des identifiants fixes en CI, conteneurs ou serveurs multi-locataires.
+- **Remplacement explicite** : passez `authUuid` ou définissez `DECKTOOLS_AUTH_UUID` (Node uniquement) pour des identifiants fixes en CI, conteneurs ou serveurs multi-locataires.
 
 ```ts
 const uuid = await deck.getAuthUuid();
