@@ -6,8 +6,12 @@ upload, SSE wait, and parse behavior.
 ## Install
 
 ```bash
-pip install decktools-sdk
+pip install https://github.com/deckflow/decktools/releases/download/python-sdk/v1.0.0/decktools_sdk-1.0.0-py3-none-any.whl
 ```
+
+The migration release is distributed through GitHub Releases; it is not yet
+published to PyPI. The distribution name is `decktools-sdk`, and the import is
+`decktools`.
 
 For local development:
 
