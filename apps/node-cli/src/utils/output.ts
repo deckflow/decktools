@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import type { DeckTask } from '@decktools/sdk';
+import type { DeckTask } from '@deckflow/decktools-sdk';
 
 type OutputFile = {
   url: string;

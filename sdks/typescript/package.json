@@ -1,5 +1,5 @@
 {
-  "name": "@decktools/sdk",
+  "name": "@deckflow/decktools-sdk",
   "version": "1.0.0",
   "description": "DeckTools TypeScript SDK for Node.js and browsers",
   "type": "module",

@@ -1,25 +1,25 @@
 **言語:** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | **日本語**
 
-# @decktools/sdk
+# @deckflow/decktools-sdk
 
 DeckTools/Deckflow タスク API 用の TypeScript SDK。Node.js とブラウザに対応します。
 
 ## インストール
 
 ```bash
-pnpm add @decktools/sdk
+pnpm add @deckflow/decktools-sdk
 ```
 
 この monorepo 内:
 
 ```bash
-pnpm --filter @decktools/sdk build
+pnpm --filter @deckflow/decktools-sdk build
 ```
 
 ## クライアントの作成
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',

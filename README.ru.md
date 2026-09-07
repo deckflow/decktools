@@ -6,7 +6,7 @@ DeckTools — это pnpm monorepo для автоматизации задач 
 
 ## Пакеты
 
-- `sdks/typescript` — `@decktools/sdk`, TypeScript SDK для Node.js и браузера для загрузки файлов и API задач.
+- `sdks/typescript` — `@deckflow/decktools-sdk`, TypeScript SDK для Node.js и браузера для загрузки файлов и API задач.
 - `apps/node-cli` — `decktools`, CLI для Node.js. См. [apps/node-cli/README.ru.md](apps/node-cli/README.ru.md).
 
 ## Установка и сборка
@@ -39,12 +39,12 @@ decktools convert slides.pptx --to pdf
 
 ## SDK
 
-API `@decktools/sdk` описан в [sdks/typescript/README.ru.md](sdks/typescript/README.ru.md).
+API `@deckflow/decktools-sdk` описан в [sdks/typescript/README.ru.md](sdks/typescript/README.ru.md).
 
 Базовый пример:
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   token: process.env.DECKTOOLS_TOKEN,

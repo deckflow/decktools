@@ -6,7 +6,7 @@ DeckTools 是一个用于 Deckflow 任务自动化的 pnpm monorepo。
 
 ## 包
 
-- `sdks/typescript` - `@decktools/sdk`，用于文件上传与任务 API 的 TypeScript SDK，兼容 Node.js 和浏览器。
+- `sdks/typescript` - `@deckflow/decktools-sdk`，用于文件上传与任务 API 的 TypeScript SDK，兼容 Node.js 和浏览器。
 - `apps/node-cli` - `decktools`，Node.js 命令行工具。用法见 [apps/node-cli/README.zh-CN.md](apps/node-cli/README.zh-CN.md)。
 
 ## 安装与构建
@@ -39,12 +39,12 @@ decktools convert slides.pptx --to pdf
 
 ## SDK
 
-`@decktools/sdk` API 见 [sdks/typescript/README.zh-CN.md](sdks/typescript/README.zh-CN.md)。
+`@deckflow/decktools-sdk` API 见 [sdks/typescript/README.zh-CN.md](sdks/typescript/README.zh-CN.md)。
 
 基本示例：
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   token: process.env.DECKTOOLS_TOKEN,

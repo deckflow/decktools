@@ -1,25 +1,25 @@
 **语言：** [English](README.md) | **简体中文** | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @decktools/sdk
+# @deckflow/decktools-sdk
 
 用于 DeckTools/Deckflow 任务 API 的 TypeScript SDK，兼容 Node.js 和浏览器。
 
 ## 安装
 
 ```bash
-pnpm add @decktools/sdk
+pnpm add @deckflow/decktools-sdk
 ```
 
 在本 monorepo 中：
 
 ```bash
-pnpm --filter @decktools/sdk build
+pnpm --filter @deckflow/decktools-sdk build
 ```
 
 ## 创建客户端
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -282,7 +282,7 @@ await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
 `ir` 是返回体原样透传，用对应任务类型的结果类型标注它：
 
 ```ts
-import type { PdfParseResult, PptxParseResult } from '@decktools/sdk';
+import type { PdfParseResult, PptxParseResult } from '@deckflow/decktools-sdk';
 
 const report = await deck.parse<PdfParseResult>('./report.pdf');
 report.ir.document.elements;

@@ -150,4 +150,22 @@ describe('Config', () => {
     expect(raw.custom).toEqual({ untouched: true });
     expect((await fs.stat(path.join(tempDir, 'credentials'))).mode & 0o777).toBe(0o600);
   });
+
+  it('never overwrites malformed shared configuration', async () => {
+    const file = path.join(tempDir, 'credentials');
+    await fs.writeFile(file, '{broken');
+    await expect(config.setToken('updated')).rejects.toThrow();
+    expect(await fs.readFile(file, 'utf8')).toBe('{broken');
+  });
+
+  it('validates product configuration before changing shared credentials', async () => {
+    const file = path.join(tempDir, 'credentials');
+    await fs.writeFile(file, '{"token":"original"}');
+    await fs.mkdir(path.join(tempDir, 'decktools'), { recursive: true });
+    await fs.writeFile(path.join(tempDir, 'decktools/config.json'), 'null');
+    await config.load();
+    config.token = 'not-written';
+    await expect(config.set('webhook', 'https://example.test')).rejects.toThrow('Invalid configuration object');
+    expect(await fs.readFile(file, 'utf8')).toBe('{"token":"original"}');
+  });
 });

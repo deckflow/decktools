@@ -41,7 +41,7 @@
     "url": "https://github.com/deckflow/decktools/issues"
   },
   "dependencies": {
-    "@decktools/sdk": "workspace:*",
+    "@deckflow/decktools-sdk": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "inquirer": "^9.2.0",

@@ -1,28 +1,28 @@
 **Languages:** English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @decktools/sdk
+# @deckflow/decktools-sdk
 
 TypeScript SDK for DeckTools/Deckflow task APIs in Node.js and browsers.
 
 ## Install
 
 ```bash
-pnpm add @decktools/sdk
+pnpm add @deckflow/decktools-sdk
 ```
 
 In this monorepo:
 
 ```bash
-pnpm --filter @decktools/sdk build
+pnpm --filter @deckflow/decktools-sdk build
 ```
 
 ## Create a Client
 
 Use the root entry point in Node.js. Browser applications should use the dedicated
-`@decktools/sdk/browser` entry point documented below.
+`@deckflow/decktools-sdk/browser` entry point documented below.
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',
@@ -70,7 +70,7 @@ Node file and UUID storage code. It is safe to import during SSR. Local paths ar
 rejected; use `File`, named `Blob`, or named binary data instead.
 
 ```ts
-import { createDeck } from '@decktools/sdk/browser';
+import { createDeck } from '@deckflow/decktools-sdk/browser';
 
 const deck = createDeck({ root: 'https://api.example.com/v1', token: userAccessToken });
 const controller = new AbortController();
@@ -340,7 +340,7 @@ await deck.convert({ taskId: parsed.taskId }, { to: 'markdown' });
 type's result:
 
 ```ts
-import type { PdfParseResult, PptxParseResult } from '@decktools/sdk';
+import type { PdfParseResult, PptxParseResult } from '@deckflow/decktools-sdk';
 
 const report = await deck.parse<PdfParseResult>('./report.pdf');
 report.ir.document.elements;

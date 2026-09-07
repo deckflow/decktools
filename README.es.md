@@ -6,7 +6,7 @@ DeckTools es un monorepo pnpm para la automatización de tareas de Deckflow.
 
 ## Paquetes
 
-- `sdks/typescript` - `@decktools/sdk`, un SDK TypeScript compatible con Node.js y navegador para subida de archivos y APIs de tareas.
+- `sdks/typescript` - `@deckflow/decktools-sdk`, un SDK TypeScript compatible con Node.js y navegador para subida de archivos y APIs de tareas.
 - `apps/node-cli` - `decktools`, la CLI de Node.js. Consulte [apps/node-cli/README.es.md](apps/node-cli/README.es.md) para su uso.
 
 ## Instalación y compilación
@@ -39,12 +39,12 @@ decktools convert slides.pptx --to pdf
 
 ## SDK
 
-Consulte [sdks/typescript/README.es.md](sdks/typescript/README.es.md) para la API de `@decktools/sdk`.
+Consulte [sdks/typescript/README.es.md](sdks/typescript/README.es.md) para la API de `@deckflow/decktools-sdk`.
 
 Ejemplo básico:
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   token: process.env.DECKTOOLS_TOKEN,

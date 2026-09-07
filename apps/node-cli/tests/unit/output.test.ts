@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import type { DeckTask } from '@decktools/sdk';
+import type { DeckTask } from '@deckflow/decktools-sdk';
 import { writeTaskOutput } from '../../src/utils/output.js';
 
 describe('writeTaskOutput', () => {

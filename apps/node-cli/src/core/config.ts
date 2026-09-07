@@ -10,6 +10,17 @@ import { CONFIG_KEYS, ConfigSchema, type ConfigData } from '../types/config.js';
 
 const DEFAULT_API_BASE = 'https://app.deckflow.com/v1';
 
+async function readStoredObject(file: string): Promise<Record<string, unknown>> {
+  try {
+    const value: unknown = JSON.parse(await fs.readFile(file, 'utf8'));
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`Invalid configuration object: ${file}`);
+    return value as Record<string, unknown>;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
+    throw error;
+  }
+}
+
 function resolveConfigDir(explicit?: string): string {
   return (
     explicit ||
@@ -71,13 +82,9 @@ export class Config {
   async save(): Promise<void> {
     await fs.mkdir(this.configDir, { recursive: true });
 
-    let existing: Record<string, unknown> = {};
-    try {
-      const raw = await fs.readFile(this.configPath, 'utf-8');
-      existing = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      // File may not exist yet.
-    }
+    const existing = await readStoredObject(this.configPath);
+    // Validate every destination before changing either file.
+    const product = this.productDirty ? await readStoredObject(this.productPath) : {};
 
     // Overlay only keys present on this.data so we do not wipe fields
     // owned by other tools when we never loaded them into memory.
@@ -99,8 +106,6 @@ export class Config {
     await fs.writeFile(this.configPath, `${JSON.stringify(output, null, 2)}\n`, { mode: 0o600 });
     await fs.chmod(this.configPath, 0o600);
     if (this.productDirty) {
-      let product: Record<string, unknown> = {};
-      try { product = JSON.parse(await fs.readFile(this.productPath, 'utf8')); } catch { /* New product file. */ }
       for (const key of ['webhook', 'retentionHours'] as const) {
         if (this.productData[key] === undefined) delete product[key];
         else product[key] = this.productData[key];

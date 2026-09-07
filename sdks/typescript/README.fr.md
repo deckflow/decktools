@@ -1,25 +1,25 @@
 **Langues :** [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | **Français** | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @decktools/sdk
+# @deckflow/decktools-sdk
 
 SDK TypeScript compatible Node.js et navigateur pour les API de tâches DeckTools/Deckflow.
 
 ## Installation
 
 ```bash
-pnpm add @decktools/sdk
+pnpm add @deckflow/decktools-sdk
 ```
 
 Dans ce monorepo :
 
 ```bash
-pnpm --filter @decktools/sdk build
+pnpm --filter @deckflow/decktools-sdk build
 ```
 
 ## Créer un client
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',

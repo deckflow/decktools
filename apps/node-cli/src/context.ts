@@ -3,7 +3,7 @@
  */
 
 import { Config } from './core/config.js';
-import { createDeck, APIError, isRetriableError, type DeckClient, type DeckTask, type TaskListResponse } from '@decktools/sdk';
+import { createDeck, APIError, isRetriableError, type DeckClient, type DeckTask, type TaskListResponse } from '@deckflow/decktools-sdk';
 import { runCheckoutFlow, runLoginFlow } from './core/auth.js';
 import { formatResponseBody, outputError, ExitCode } from './utils/errors.js';
 import {

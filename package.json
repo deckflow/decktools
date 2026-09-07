@@ -17,7 +17,7 @@
     "release:bump": "node scripts/bump-version.mjs",
     "release:bump:minor": "node scripts/bump-version.mjs minor",
     "release:bump:major": "node scripts/bump-version.mjs major",
-    "release:sdk": "pnpm --filter @decktools/sdk publish --access public --no-git-checks",
+    "release:sdk": "pnpm --filter @deckflow/decktools-sdk publish --access public --no-git-checks",
     "release:cli": "pnpm --filter decktools publish --access public --no-git-checks",
     "release": "pnpm release:check && pnpm release:bump && pnpm release:sdk && pnpm release:cli"
   },

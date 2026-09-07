@@ -3,7 +3,7 @@
 更新：2026-09-05。源码已准备并验证，**未发布、未改远端仓库名、未移动本地目录、未切换真实消费者**。
 
 - 分支：`codex/decktools-migration`；基线：`4a5f70677d6cb7cd5e95ee6a89a88adf942687b0`，原默认分支是 `master`，不是无关历史的 `origin/main`。
-- 新 CLI/SDK：`decktools@1.0.0`、`@decktools/sdk@1.0.0`；仅 `decktools` binary。SDK 保留独立 Node 和 `@decktools/sdk/browser` 入口。不再回退 `DECKOPS_*`。
+- 新 CLI/SDK：`decktools@1.0.0`、`@deckflow/decktools-sdk@1.0.0`；仅 `decktools` binary。SDK 保留独立 Node 和 `@deckflow/decktools-sdk/browser` 入口。不再回退 `DECKOPS_*`。
 - Go module：`github.com/deckflow/decktools/sdks/go`；Python：发行名 `decktools-sdk`、import `decktools`。release/installer 名称已更新。
 - 共享凭据与 UUID 只跟随 `DECKFLOW_CONFIG_DIR`，默认 `~/.deckflow/credentials` / `auth-uuid`。Node CLI 产品配置为 `~/.deckflow/decktools/config.json`，`DECKTOOLS_CONFIG_DIR` 只覆盖产品目录；不会因改名建立新的身份。
 - 环境变量优先级：产品 `DECKTOOLS_*` → 共享 `DECKFLOW_*` → 存储值；运行时环境凭据不回写共享文件。Go CLI 没有新增产品偏好设置功能，继续只管理共享鉴权字段，并保留其他产品字段。

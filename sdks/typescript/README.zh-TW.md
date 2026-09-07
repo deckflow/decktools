@@ -1,25 +1,25 @@
 **語言：** [English](README.md) | [简体中文](README.zh-CN.md) | **繁體中文** | [Français](README.fr.md) | [Español](README.es.md) | [Русский](README.ru.md) | [日本語](README.ja.md)
 
-# @decktools/sdk
+# @deckflow/decktools-sdk
 
 用於 DeckTools/Deckflow 任務 API 的 TypeScript SDK，相容 Node.js 與瀏覽器。
 
 ## 安裝
 
 ```bash
-pnpm add @decktools/sdk
+pnpm add @deckflow/decktools-sdk
 ```
 
 在本 monorepo 中：
 
 ```bash
-pnpm --filter @decktools/sdk build
+pnpm --filter @deckflow/decktools-sdk build
 ```
 
 ## 建立客戶端
 
 ```ts
-import { createDeck } from '@decktools/sdk';
+import { createDeck } from '@deckflow/decktools-sdk';
 
 const deck = createDeck({
   root: 'https://app.deckflow.com/v1',

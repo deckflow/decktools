@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const PACKAGES = [
-  { path: 'sdks/typescript/package.json', name: '@decktools/sdk' },
+  { path: 'sdks/typescript/package.json', name: '@deckflow/decktools-sdk' },
   { path: 'apps/node-cli/package.json', name: 'decktools' },
 ];
 
