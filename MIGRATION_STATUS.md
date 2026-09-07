@@ -27,7 +27,7 @@
 - Go SDK：github.com/deckflow/decktools/sdks/go@v1.0.0；远端模块下载验证通过。
 - [Go CLI v1.0.0](https://github.com/deckflow/decktools/releases/tag/go-cli/v1.0.0)：六个平台归档、checksum、installer 已发布；下载 macOS arm64 后版本验证通过。
 - GoReleaser 初次遇到同 commit 的 SDK tag 选错 Release tag，已修正 Release 归属，未重写 Git tags；b4111f6 固定后续使用触发的 CLI tag。
-- [Python SDK v1.0.0](https://github.com/deckflow/decktools/releases/tag/python-sdk/v1.0.0)：wheel / sdist 已发布，发行名 decktools-sdk、import decktools。尚未发布 PyPI，README 提供 GitHub wheel 安装地址。
+- [Python SDK v1.0.0](https://github.com/deckflow/decktools/releases/tag/python-sdk/v1.0.0)：wheel / sdist 已发布，独立 venv 下载安装及 import / 版本检查通过，发行名 decktools-sdk、import decktools。尚未发布 PyPI，README 提供 GitHub wheel 安装地址。
 
 ## 保留限制
 
