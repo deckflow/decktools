@@ -38,3 +38,5 @@ jobs:
           args: release --clean --config .goreleaser.go-cli.yaml --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # SDK tags can share this commit; select the triggering CLI tag.
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
