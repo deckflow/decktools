@@ -11,7 +11,12 @@ const PACKAGES = [
   { path: 'apps/node-cli/package.json', name: 'decktools' },
 ];
 
-const bumpType = process.argv[2] ?? 'patch';
+const GITHUB_REGISTRY = 'https://npm.pkg.github.com';
+
+const args = process.argv.slice(2);
+const github = args.includes('--github');
+const bumpType = args.find((arg) => !arg.startsWith('--')) ?? 'patch';
+const registry = github ? GITHUB_REGISTRY : undefined;
 
 function compareVersions(a, b) {
   const pa = a.split('.').map(Number);
@@ -41,8 +46,9 @@ function bumpVersion(version, type) {
 }
 
 function getPublishedVersion(name) {
+  const registryArg = registry ? ` --registry ${registry}` : '';
   try {
-    return execSync(`npm view ${name} version`, {
+    return execSync(`npm view ${name} version${registryArg}`, {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
@@ -97,7 +103,10 @@ if (!publishedVersion || compareVersions(localVersion, publishedVersion) === 0) 
     `Bumping ${localVersion} -> ${nextVersion} (${publishedVersion ? 'already published' : 'first publish'})`,
   );
 } else {
-  console.log(`Using existing local version ${localVersion} (npm latest: ${publishedVersion})`);
+  const registryLabel = github ? 'GitHub Packages' : 'npm';
+  console.log(
+    `Using existing local version ${localVersion} (${registryLabel} latest: ${publishedVersion})`,
+  );
 }
 
 if (nextVersion !== localVersion) {
